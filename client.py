@@ -5,7 +5,7 @@ import socket
 from _thread import *
 import network
 
-from .wifi_config import WIFI
+from wifi_config import WIFI
 
 wifi = network.WLAN(network.STA_IF)
 wifi.active(True)
@@ -14,7 +14,7 @@ wifi.connect(WIFI.SSID, WIFI.PW)
 while not wifi.isconnected():
     pass
 
-HOST = '192.168.59.135'
+HOST = '192.168.207.199'
 PORT = 9999
 
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -47,10 +47,9 @@ while True:
             else:
                 button = 0
                 for find in range(0, NUM_PADS):
-                    # check if this button is pressed and no other buttons are pressed
                     if button_states & 0x01 > 0:
                         if not (button_states & (~0x01)) > 0:
-                            message = "Hello World!"
+                            message = f">> deviceID=3, buttonID={find} <<"
                             client_socket.send(message.encode())
                             lit = lit | (1 << button)
                         break
@@ -77,4 +76,6 @@ while True:
     keypad.update()
 
     time.sleep(0.1)
+
+
 
