@@ -8,6 +8,7 @@ import network
 
 from wifi_config import WIFI
 
+# PicoPad Device ID (Manual, 1~6)
 deviceID = 2
 
 keypad = picokeypad.PicoKeypad()
@@ -32,8 +33,13 @@ def recv_data(client_socket):
         data = client_socket.recv(32).decode()
         try:
             data = json.loads(data)
+            # Except Same Device ID
+            # if deviceID in data['cmdDeviceID']: -> Time Complexity : O(log N)
+                    
             if data['deviceID'] != deviceID:
+                # Picokey().illuminate(buttonId: int, Red: int, Green: int, Blue: int)
                 keypad.illuminate(int(data['buttonID']), 0x00, 0x00, 0x20)
+            # Update -> Save RGB code
             keypad.update()
         except:
             print(data)
@@ -61,8 +67,10 @@ while True:
                 for find in range(0, NUM_PADS):
                     if button_states & 0x01 > 0:
                         if not (button_states & (~0x01)) > 0:
-                            message = {'deviceID': deviceID, 'buttonID': find}
+                            # JSON Data Type Casting
+                            message: dict = {'deviceID': deviceID, 'buttonID': find, 'cmdDeviceID': [1, 2, 3, 4]}
                             recv_json = json.dumps(message)
+                            # JSON Data Send to Server
                             client_socket.send(recv_json.encode())
                             lit = lit | (1 << button)
                         break
