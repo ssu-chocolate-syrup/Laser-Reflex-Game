@@ -1,4 +1,5 @@
 import time
+import random
 from typing import List, Tuple, Union
 
 
@@ -15,6 +16,8 @@ MAX_Y = 10
 MirrorTypeX = 1
 MirrorTypeY = 3
 
+# p1_goalpost = [-1 for _ in range(MAX_X)]
+# p2_goalpost = [-1 for _ in range(MAX_X)]
 p1_goalpost = [-1, -1, -1, 0, 1, -1, -1]
 p2_goalpost = [-1, 1, -1, 0, -1, -1, -1]
 
