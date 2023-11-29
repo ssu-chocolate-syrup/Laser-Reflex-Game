@@ -16,10 +16,12 @@ MAX_Y = 10
 MirrorTypeX = 1
 MirrorTypeY = 3
 
-# p1_goalpost = [-1 for _ in range(MAX_X)]
-# p2_goalpost = [-1 for _ in range(MAX_X)]
-p1_goalpost = [-1, -1, -1, 0, 1, -1, -1]
-p2_goalpost = [-1, 1, -1, 0, -1, -1, -1]
+p1_goalpost = [-1 for _ in range(MAX_X)]
+p2_goalpost = [-1 for _ in range(MAX_X)]
+p1_goalpost[3] = 0
+p2_goalpost[3] = 0
+p1_goalpost[random.choice([0, 1, 2, 4, 5, 6])] = 1
+p2_goalpost[random.choice([0, 1, 2, 4, 5, 6])] = 1
 
 mirror = [[0] * MAX_X for _ in range(MAX_Y)]
 laser = [[0] * MAX_X for _ in range(MAX_Y)]
@@ -102,8 +104,10 @@ def pprint():
     print(" ")
     for i in range(MAX_Y):
         for j in range(MAX_X):
-            if mirror[i][j]: print("/" if mirror[i][j] == MirrorTypeX else "\\", end=" ")
-            else: print(laser[i][j], end=" ")
+            if mirror[i][j]:
+                print("/" if mirror[i][j] == MirrorTypeX else "\\", end=" ")
+            else:
+                print(laser[i][j], end=" ")
         print()
     for i in p2_goalpost:
         print("X" if i == -1 else "-" if not i else "X", end=" ")
