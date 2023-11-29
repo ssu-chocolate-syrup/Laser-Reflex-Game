@@ -1,4 +1,5 @@
 import time
+import json
 import picokeypad
 from machine import UART, Pin
 import socket
@@ -6,6 +7,11 @@ from _thread import *
 import network
 
 from wifi_config import WIFI
+
+deviceID = 2
+
+keypad = picokeypad.PicoKeypad()
+keypad.set_brightness(1.0)
 
 wifi = network.WLAN(network.STA_IF)
 wifi.active(True)
@@ -20,14 +26,20 @@ PORT = 9999
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client_socket.connect((HOST, PORT))
 
+
 def recv_data(client_socket):
     while True:
-        data = client_socket.recv(1024)
+        data = client_socket.recv(32).decode()
+        try:
+            data = json.loads(data)
+            if data['deviceID'] != deviceID:
+                keypad.illuminate(int(data['buttonID']), 0x00, 0x00, 0x20)
+            keypad.update()
+        except:
+            print(data)
+
 
 start_new_thread(recv_data, (client_socket,))
-
-keypad = picokeypad.PicoKeypad()
-keypad.set_brightness(1.0)
 
 lit = 0
 last_button_states = 0
@@ -49,13 +61,15 @@ while True:
                 for find in range(0, NUM_PADS):
                     if button_states & 0x01 > 0:
                         if not (button_states & (~0x01)) > 0:
-                            message = f">> deviceID=3, buttonID={find} <<"
-                            client_socket.send(message.encode())
+                            message = {'deviceID': deviceID, 'buttonID': find}
+                            recv_json = json.dumps(message)
+                            client_socket.send(recv_json.encode())
                             lit = lit | (1 << button)
                         break
                     button_states >>= 1
                     button += 1
 
+'''
     for i in range(0, NUM_PADS):
         if (lit >> i) & 0x01:
             if colour_index == 0:
@@ -76,6 +90,4 @@ while True:
     keypad.update()
 
     time.sleep(0.1)
-
-
-
+'''
