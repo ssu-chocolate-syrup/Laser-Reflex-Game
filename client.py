@@ -7,8 +7,8 @@ from _thread import *
 import network
 
 from wifi_config import WIFI
+from server_config import Server
 
-# PicoPad Device ID (Manual, 1~6)
 deviceID = 2
 
 keypad = picokeypad.PicoKeypad()
@@ -16,16 +16,32 @@ keypad.set_brightness(1.0)
 
 wifi = network.WLAN(network.STA_IF)
 wifi.active(True)
-wifi.connect(WIFI.SSID, WIFI.PW)
 
-while not wifi.isconnected():
-    pass
 
-HOST = '192.168.207.199'
-PORT = 9999
+class Exception:
+    def __init__(self, msg, button_id):
+        self.msg = msg
+        self.button_id = button_id
+
+    def error(self):
+        print(self.msg)
+        keypad.illuminate(self.button_id, 0x20, 0x00, 0x00)
+        keypad.update()
+
+
+try:
+    wifi.connect(WIFI.SSID, WIFI.PW)
+    while not wifi.isconnected():
+        pass
+except:
+    Exception('WIFI Connection Failed', 0).error()
 
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-client_socket.connect((HOST, PORT))
+
+try:
+    client_socket.connect((Server.HOST, Server.PORT))
+except:
+    Exception('Socket Connection Failed', 1).error()
 
 
 def recv_data(client_socket):
@@ -33,13 +49,8 @@ def recv_data(client_socket):
         data = client_socket.recv(32).decode()
         try:
             data = json.loads(data)
-            # Except Same Device ID
-            # if deviceID in data['cmdDeviceID']: -> Time Complexity : O(log N)
-
-            if data['deviceID'] != deviceID:
-                # Picokey().illuminate(buttonId: int, Red: int, Green: int, Blue: int)
+            if (data['deviceID'] != deviceID):
                 keypad.illuminate(int(data['buttonID']), 0x00, 0x00, 0x20)
-            # Update -> Save RGB code
             keypad.update()
         except:
             print(data)
@@ -57,25 +68,23 @@ while True:
     if last_button_states != button_states:
         last_button_states = button_states
         if button_states > 0:
-            # if lit == 0xffff:
-            #     lit = 0
-            #     colour_index += 1
-            #     if colour_index >= 6:
-            #         colour_index = 0
-            # else:
-            button = 0
-            for find in range(0, NUM_PADS):
-                if button_states & 0x01 > 0:
-                    if not (button_states & (~0x01)) > 0:
-                        # JSON Data Type Casting
-                        message: dict = {'deviceID': deviceID, 'buttonID': find, 'cmdDeviceID': [1, 2, 3, 4]}
-                        recv_json = json.dumps(message)
-                        # JSON Data Send to Server
-                        client_socket.send(recv_json.encode())
-                        lit = lit | (1 << button)
-                    break
-                button_states >>= 1
-                button += 1
+            if lit == 0xffff:
+                lit = 0
+                colour_index += 1
+                if colour_index >= 6:
+                    colour_index = 0
+            else:
+                button = 0
+                for find in range(0, NUM_PADS):
+                    if button_states & 0x01 > 0:
+                        if not (button_states & (~0x01)) > 0:
+                            message = {'deviceID': deviceID, 'buttonID': find}
+                            recv_json = json.dumps(message)
+                            client_socket.send(recv_json.encode())
+                            lit = lit | (1 << button)
+                        break
+                    button_states >>= 1
+                    button += 1
 
 '''
     for i in range(0, NUM_PADS):
