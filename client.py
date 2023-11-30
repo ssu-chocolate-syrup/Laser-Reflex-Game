@@ -8,6 +8,7 @@ import network
 
 from wifi_config import WIFI
 from server_config import Server
+from io import IO as _IO
 
 device_id = 2
 
@@ -17,6 +18,7 @@ keypad.set_brightness(1.0)
 wifi = network.WLAN(network.STA_IF)
 wifi.active(True)
 
+IO = _IO()
 
 class CustomException:
     def __init__(self, msg, button_id):
@@ -51,8 +53,9 @@ def recv_data(client_socket):
             data = json.loads(data)
             print(data)
             if data['deviceID'] == device_id:
-                keypad.illuminate(int(data['buttonID']), 0x00, 0x00, 0x20)
-                keypad.update()
+                IO.output_interface(0, 0, (0, 0, 0))
+                # keypad.illuminate(int(data['buttonID']), 0x00, 0x00, 0x20)
+                # keypad.update()
         except:
             print(data)
         time.sleep(0.1)
