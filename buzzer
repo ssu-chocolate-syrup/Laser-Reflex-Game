@@ -1,7 +1,6 @@
 import RPi.GPIO as GPIO
 import time
 
-#GPIO18에 부저 연결
 buzzer = 18
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(buzzer,GPIO.OUT)
