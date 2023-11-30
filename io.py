@@ -6,15 +6,14 @@ keypad.set_brightness(1.0)
 
 class IO:
     #turn on LED
-    def set_led(self, num_pico: int, num_button: int, rgb_code: Tuple[int, int, int]) -> None:
-        if num_pico == deviceID and 0 <= num_button < 16:
+    def set_led(self, device_id: int, num_pico: int, num_button: int, rgb_code: Tuple[int, int, int]) -> None:
+        if num_pico == device_id and 0 <= num_button < 16:
             keypad.illuminate(num_button, *rgb_code)
             keypad.update()
 
     #pico Pi signal to Matrix signal
     def input_interface(self, num_pico: int, num_button: int) -> Tuple[int, int]:
         k = num_pico // 2
-
         if num_pico % 2 == 1:
             row = (3 - (num_button % 4)) + (k * 4)
             col = num_button // 4
@@ -36,5 +35,6 @@ class IO:
         return tuple(num_pico, num_button)
 
     def turn_on(self, row: int, col: int, rgb_code: Tuple[int, int, int]) -> None:
-        num_pico, num_button = output_interface(row, col)
-        set_led(num_pico, num_button, rgb_code)
+        num_pico, num_button = self.output_interface(row, col)
+        self.set_led(num_pico, num_button, rgb_code)
+        return None
