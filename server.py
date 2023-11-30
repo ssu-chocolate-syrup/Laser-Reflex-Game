@@ -1,13 +1,16 @@
 import socket
+import json
+import time
 from _thread import *
+
+from server_config import Server
 
 client_sockets = []
 
-## Server IP and Port ##
-
-HOST = '0.0.0.0'
-PORT = 9999
-
+def push(device_id, button_id):
+    data = dict(deviceID=device_id, buttonID=button_id)
+    data = json.dumps(data)
+    client_socket.send(data.encode())
 
 ########## processing in thread ##
 ## new client, new thread ##
@@ -17,6 +20,13 @@ def threaded(client_socket, addr):
 
     ## process until client disconnect ##
     while True:
+        for i in range(16):
+            push(2, i)
+            time.sleep(1)
+        for i in range(16):
+            push(3, i)
+            time.sleep(1)
+        '''
         try:
             ## send client if data recieved(echo) ##
             data = client_socket.recv(1024)
@@ -25,16 +35,19 @@ def threaded(client_socket, addr):
                 print('>> Disconnected by ' + addr[0], ':', addr[1])
                 break
             print('>> Received from ' + addr[0], ':', addr[1], data.decode())
-            client_socket.send(data)
+
+            #client_socket.send(data)
             ## chat to client connecting client ##
             ## chat to client connecting client except person sending message ##
+            """
             for client in client_sockets:
                 if client != client_socket:
                     client.send(data)
-
+            """
         except ConnectionResetError as e:
             print('>> Disconnected by ' + addr[0], ':', addr[1])
             break
+        '''
 
     if client_socket in client_sockets:
         client_sockets.remove(client_socket)
@@ -45,10 +58,10 @@ def threaded(client_socket, addr):
 
 ############# Create Socket and Bind ##
 
-print('>> Server Start with ip :', HOST)
+print('>> Server Start with ip :', Server.HOST)
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-server_socket.bind((HOST, PORT))
+server_socket.bind((Server.HOST, Server.PORT))
 server_socket.listen()
 
 ############# Client Socket Accept ##

@@ -26,7 +26,7 @@ def p2_segment(c):
             GPIO.output(p2_pins[k], GPIO.HIGH)
 
 
-def main():
+def num_out():
     try:
         GPIO.setup(list(pins.values()), GPIO.OUT)
         GPIO.output(list(pins.values()), GPIO.LOW)
@@ -38,4 +38,4 @@ def main():
     finally:
         GPIO.cleanup()
 
-main()
+num_out()
