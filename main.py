@@ -54,8 +54,15 @@ def dfs(x: int, y: int, direction: Direction) -> Tuple[int, int]:
         return (-1, -1)
 
     laser[x][y] = 1
+    
     if mirror[x][y]:
+        if (mirror[x][y]==1):
+            print(f'row : {x}, col: {y}, install mirror type /')
+        else:
+            print(f'row : {x}, col: {y}, install mirror type \\')
         direction = mirror_direction(x, y, direction)
+    else:
+        print(f'row : {x}, col : {y}, install lazer')
 
     if direction == Direction.LEFT:
         return dfs(x, y - 1, direction)
