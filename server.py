@@ -4,8 +4,9 @@ import time
 from _thread import *
 
 from server_config import Server
-
+from interface import IO as _IO
 client_sockets = []
+IO = _IO()
 
 def push(device_id, button_id):
     data = dict(deviceID=device_id, buttonID=button_id)
@@ -20,13 +21,6 @@ def threaded(client_socket, addr):
 
     ## process until client disconnect ##
     while True:
-        for i in range(16):
-            push(2, i)
-            time.sleep(1)
-        for i in range(16):
-            push(3, i)
-            time.sleep(1)
-        '''
         try:
             ## send client if data recieved(echo) ##
             data = client_socket.recv(1024)
@@ -36,18 +30,15 @@ def threaded(client_socket, addr):
                 break
             print('>> Received from ' + addr[0], ':', addr[1], data.decode())
 
-            #client_socket.send(data)
+            client_socket.send(data)
             ## chat to client connecting client ##
             ## chat to client connecting client except person sending message ##
-            """
             for client in client_sockets:
                 if client != client_socket:
                     client.send(data)
-            """
         except ConnectionResetError as e:
             print('>> Disconnected by ' + addr[0], ':', addr[1])
             break
-        '''
 
     if client_socket in client_sockets:
         client_sockets.remove(client_socket)

@@ -8,7 +8,7 @@ import network
 
 from wifi_config import WIFI
 from server_config import Server
-from io import IO as _IO
+from interface import IO as _IO
 
 device_id = 2
 
@@ -53,7 +53,7 @@ def recv_data(client_socket):
             data = json.loads(data)
             print(data)
             if data['deviceID'] == device_id:
-                IO.output_interface(0, 0, (0, 0, 0))
+                IO.turn_on(data['row'], data['col'], (255, 0, 0))
                 # keypad.illuminate(int(data['buttonID']), 0x00, 0x00, 0x20)
                 # keypad.update()
         except:
@@ -83,7 +83,10 @@ while True:
                 for find in range(0, NUM_PADS):
                     if button_states & 0x01 > 0:
                         if not (button_states & (~0x01)) > 0:
-                            message = {'deviceID': device_id, 'buttonID': find}
+                            row, col = IO.input_interface(device_id, find)
+                            message = dict(deviceID=device_id,
+                                           row=row,
+                                           col=col)
                             recv_json = json.dumps(message)
                             client_socket.send(recv_json.encode())
                             lit = lit | (1 << button)
