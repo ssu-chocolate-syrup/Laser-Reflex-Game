@@ -22,7 +22,10 @@ def threaded(client_socket, addr):
     while True:
         for i in range(16):
             push(2, i)
-            time.sleep(5)
+            time.sleep(1)
+        for i in range(16):
+            push(3, i)
+            time.sleep(1)
         '''
         try:
             ## send client if data recieved(echo) ##
