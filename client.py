@@ -12,7 +12,7 @@ from interface import PicoIO
 device_id = 3
 
 keypad = picokeypad.PicoKeypad()
-keypad.set_brightness(1.0)
+keypad.set_brightness(0)
 
 wifi = network.WLAN(network.STA_IF)
 wifi.active(True)
@@ -27,8 +27,8 @@ class CustomException:
 
     def error(self):
         print(self.msg)
-        keypad.illuminate(self.button_id, 0x20, 0x00, 0x00)
-        keypad.update()
+        row, col = pico_io.input_interface(device_id, self.button_id)
+        pico_io.run(device_id, row, col, [255, 0, 0])
 
 
 try:
@@ -52,14 +52,10 @@ def recv_data(client_socket):
             data = client_socket.recv(100).decode()
             data = json.loads(data)
             print(data)
-            print(pico_io.output_interface(data['row'], data['col']))
             if data['deviceID'] == device_id:
-                pico_io.turn_on(device_id, data['row'], data['col'], [0x00, 0x20, 0x00])
-                # keypad.illuminate(int(data['buttonID']), 0x00, 0x00, 0x20)
-                # keypad.update()
+                pico_io.run(device_id, data['row'], data['col'], [0, 255, 0])
         except:
             print(type(data))
-        time.sleep(0.1)
 
 
 start_new_thread(recv_data, (client_socket,))
@@ -71,12 +67,12 @@ colour_index = 0
 print("Client Start")
 for button_id in range(16):
     row, col = pico_io.input_interface(device_id, button_id)
-    pico_io.run(device_id, row, col, (255, 0, 0))
-    time.sleep(1)
+    pico_io.run(device_id, row, col, (250, 146, 0))
+    time.sleep(0.1)
+
 for button_id in range(16):
     row, col = pico_io.input_interface(device_id, button_id)
     pico_io.run(device_id, row, col, (0, 0, 0))
-    time.sleep(1)
 
 NUM_PADS = keypad.get_num_pads()
 while True:
