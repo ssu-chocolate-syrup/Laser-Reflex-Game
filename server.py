@@ -55,6 +55,7 @@ server_socket.listen()
 
 try:
     while True:
+        print('hihi')
         print('>> Wait')
 
         client_socket, addr = server_socket.accept()
