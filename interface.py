@@ -9,6 +9,8 @@ class PicoIO:
 
             keypad.illuminate(num_button, *rgb_code)
             keypad.update()
+            return 1
+        return 0
 
     # pico Pi signal to Matrix signal
     def input_interface(self, num_pico, num_button):
@@ -25,10 +27,10 @@ class PicoIO:
     # Matrix signal to pico Pi signal
     def output_interface(self, row, col):
         if col < 4:
-            num_pico = 2 * (row % 4 + 1) - 1
+            num_pico = 2 * (row // 4 + 1) - 1
             num_button = 4 * (col // 4) + (3 - (row % 4))
         else:
-            num_pico = 2 * (row % 4 + 1)
+            num_pico = 2 * (row // 4 + 1)
             num_button = 4 * (3 - (col // 4)) + (row % 4)
 
         return num_pico, num_button
