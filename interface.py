@@ -4,7 +4,7 @@ class PicoIO:
         if num_pico == check_num_pico and 0 <= num_button < 16:
             import picokeypad
 
-            keypad = picokeypad.PicoKeyPad()
+            keypad = picokeypad.PicoKeypad()
             keypad.set_brightness(1.0)
 
             keypad.illuminate(num_button, *rgb_code)
@@ -28,10 +28,10 @@ class PicoIO:
     def output_interface(self, row, col):
         if col < 4:
             num_pico = 2 * (row // 4 + 1) - 1
-            num_button = 4 * (col // 4) + (3 - (row % 4))
+            num_button = 4 * col + (3 - (row % 4))
         else:
             num_pico = 2 * (row // 4 + 1)
-            num_button = 4 * (3 - (col // 4)) + (row % 4)
+            num_button = 4 * (3 - (col - 4)) + (row % 4)
 
         return num_pico, num_button
 

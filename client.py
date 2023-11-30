@@ -50,14 +50,14 @@ def recv_data(client_socket):
         data = client_socket.recv(1024).decode()
         try:
             data = json.loads(data)
-            # print(data)
+            print(data)
             print(pico_io.output_interface(data['row'], data['col']))
             if data['deviceID'] == device_id:
                 pico_io.turn_on(device_id, data['row'], data['col'], [0x00, 0x20, 0x00])
                     # keypad.illuminate(int(data['buttonID']), 0x00, 0x00, 0x20)
                     # keypad.update()
-        except:
-            print(data)
+       except:
+            print(type(data))
         time.sleep(0.1)
 
 
