@@ -19,6 +19,12 @@ def push(device_id, button_id):
 
 def threaded(client_socket, addr):
     print('>> Connected by :', addr[0], ':', addr[1])
+    send_data = json.dumps(game_instance.main())
+    client_socket.send(send_data.encode())
+    for client in client_sockets:
+        if client != client_socket:
+            client.send(send_data.encode())
+
     while True:
         try:
             data = client_socket.recv(1024).decode()
@@ -28,7 +34,8 @@ def threaded(client_socket, addr):
             print('>> Received from ' + addr[0], ':', addr[1], data)
             data = json.loads(data[0:data.index('}') + 1])
             row, col = pico_interface.input_interface(data['deviceID'], data['buttonID'])
-            send_data = json.dumps(game_instance.main(row, col))
+            game_instance.input_mirror(row, col)
+            send_data = json.dumps(game_instance.main())
 
             client_socket.send(send_data.encode())
             for client in client_sockets:

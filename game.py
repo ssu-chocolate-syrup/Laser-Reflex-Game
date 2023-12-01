@@ -130,8 +130,10 @@ class LaserGame:
     def encode_input(self, mirror_type: str) -> int:
         return self.Item.MIRROR_LEFT2UP if mirror_type == '/' else self.Item.MIRROR_LEFT2DOWN
 
-    def input_mirror(self, x: int, y: int, mirror_type: str):
-        self.mirror[x][y] = self.encode_input(mirror_type)
+    def input_mirror(self, row: int, col: int):
+        self.mirror[row][col] += 1
+        if self.mirror[row][col] > 3:
+            self.mirror[row][col] = 0
 
     # def pprint(self):
     #     print("===========")
@@ -150,14 +152,8 @@ class LaserGame:
     #     print(" ")
     #     print("===========")
 
-    def main(self, row, col):
-        flag = 1
-        self.mirror[row][col] += 1
-        if self.mirror[row][col] > 3:
-            self.mirror[row][col] = 0
-
+    def main(self):
         self.dfs(0, self.MAX_Y // 2, self.Direction.DOWN)
-        pprint(self.send_data)
         return self.send_data
         # while True:
         #     player = [0]
