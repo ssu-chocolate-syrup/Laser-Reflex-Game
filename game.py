@@ -78,26 +78,26 @@ class LaserGame:
                 # print(f'row : {x}, col: {y}, install mirror type /')
                 device_id, button_id = self.pico_interface.output_interface(x, y)
                 self.send_data.append(dict(
-                    rgb=self.RGB.MIRROR_LEFT2UP,
-                    deviceID=device_id,
-                    buttonID=button_id
+                    c=self.RGB.MIRROR_LEFT2UP,
+                    d=device_id,
+                    b=button_id
                 ))
             elif self.mirror[x][y] == self.Item.MIRROR_LEFT2DOWN:
                 # print(f'row : {x}, col: {y}, install mirror type \\')
                 device_id, button_id = self.pico_interface.output_interface(x, y)
                 self.send_data.append(dict(
-                    rgb=self.RGB.MIRROR_LEFT2DOWN,
-                    deviceID=device_id,
-                    buttonID=button_id
+                    c=self.RGB.MIRROR_LEFT2DOWN,
+                    d=device_id,
+                    b=button_id
                 ))
             direction = self.mirror_direction(x, y, direction)
         else:
             # print(f'row : {x}, col : {y}, install lazer')
             device_id, button_id = self.pico_interface.output_interface(x, y)
             self.send_data.append(dict(
-                rgb=self.RGB.LASER,
-                deviceID=device_id,
-                buttonID=button_id
+                c=self.RGB.LASER,
+                d=device_id,
+                b=button_id
             ))
 
         if direction == self.Direction.LEFT:

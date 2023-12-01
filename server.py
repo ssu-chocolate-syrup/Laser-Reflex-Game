@@ -21,7 +21,7 @@ def threaded(client_socket, addr):
                 print('>> Disconnected by ' + addr[0], ':', addr[1])
                 break
             print('>> Received from ' + addr[0], ':', addr[1], data)
-            data = json.loads(data)
+            data = json.loads(data[data.index('{'):data.index('}')+1])
             row, col = pico_interface.input_interface(data['deviceID'], data['buttonID'])
             if row == 0 and col == 0:
                 send_data = json.dumps(game_instance.main()).encode()
