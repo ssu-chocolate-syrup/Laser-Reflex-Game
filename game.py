@@ -186,4 +186,13 @@ class LaserGame:
 
 if __name__ == "__main__":
     laser_game = LaserGame()
-    laser_game.main(3, 3)
+    pprint(laser_game.main())
+    print('-' * 20)
+
+    laser_game.input_mirror(1, 3)
+    pprint(laser_game.main())
+    print('-' * 20)
+
+    laser_game.input_mirror(1, 0)
+    pprint(laser_game.main())
+    print('-' * 20)
