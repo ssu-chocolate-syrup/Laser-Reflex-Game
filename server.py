@@ -20,16 +20,16 @@ def threaded(client_socket, addr):
                 print('>> Disconnected by ' + addr[0], ':', addr[1])
                 break
             print('>> Received from ' + addr[0], ':', addr[1], data)
-            data = json.loads(data[data.index('{'):data.index('}') + 1])
+            data = json.loads(data)
             row, col = pico_interface.input_interface(data['deviceID'], data['buttonID'])
             if row != 0 and col != 0:
                 game_instance.input_mirror(row, col)
             send_data = json.dumps(game_instance.main())
-            print("data send", send_data)
-            client_socket.send(send_data.encode())
+            #print("data send", send_data)
+            client_socket.sendall(send_data.encode())
             for client in client_sockets:
                 if client != client_socket:
-                    client.send(send_data.encode())
+                    client.sendall(send_data.encode())
 
         except ConnectionResetError as e:
             print('>> Disconnected by ' + addr[0], ':', addr[1])
