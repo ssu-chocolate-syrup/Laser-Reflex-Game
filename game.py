@@ -25,7 +25,7 @@ class Direction:
 
 
 class LaserGame:
-    def __init__(self, max_x: int = 10, max_y: int = 7):
+    def __init__(self, max_x: int = 12, max_y: int = 7):
         self.MAX_X = max_x
         self.MAX_Y = max_y
         self.p1_goalpost = [-1 for _ in range(self.MAX_Y)]
@@ -67,9 +67,9 @@ class LaserGame:
             return directional_response[direction]
 
     def dfs(self, x: int, y: int, direction: int) -> Tuple[int, int]:
-        if x <= -1 or x >= self.MAX_Y:
+        if x <= -1 or x >= self.MAX_X:
             return (x + 1, y) if x == -1 else (x - 1, y)
-        if y <= -1 or y >= self.MAX_X:
+        if y <= -1 or y >= self.MAX_Y:
             return (-1, -1)
 
         self.laser[x][y] = 1
@@ -132,7 +132,7 @@ class LaserGame:
 
     def input_mirror(self, row: int, col: int):
         self.mirror[row][col] += 1
-        if self.mirror[row][col] > 3:
+        if self.mirror[row][col] > 2:
             self.mirror[row][col] = 0
 
     # def pprint(self):
@@ -153,6 +153,7 @@ class LaserGame:
     #     print("===========")
 
     def main(self):
+        self.send_data = []
         self.dfs(0, self.MAX_Y // 2, self.Direction.DOWN)
         return self.send_data
         # while True:
