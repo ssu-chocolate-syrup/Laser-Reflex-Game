@@ -2,6 +2,7 @@ import time
 import json
 import picokeypad
 import socket
+import struct
 from _thread import *
 import network
 
@@ -56,22 +57,29 @@ except:
     ErrorException('Socket Connection Failed', 1).error()
 
 
+def recv_all(client_socket, n):
+    data = b''
+    while len(data) < n:
+        packet = client_socket.recv(n - len(data))
+        if not packet:
+            return None
+        data += packet
+    return data
+
+
 def recv_data(client_socket):
     while True:
-        data = None
-        try:
-            data = client_socket.recv(1024 * 10).decode()
-            data = json.loads(data)
-            for button in range(16):
-                row, col = pico_interface.input_interface(device_id, button)
-                pico_io.run(device_id, row, col, (0, 0, 0))
-            for item in data:
-                row, col = pico_interface.input_interface(item['deviceID'], item['buttonID'])
-                pico_io.run(device_id, row, col, item['rgb'])
-                time.sleep(0.1)
-        except:
-            print(data)
-            # pico_io.run(device_id)
+        raw_msglen = recv_all(client_socket, 4)
+        msglen = struct.unpack('!I', raw_msglen)[0]
+        data = recv_all(client_socket, msglen).decode()
+        data = json.loads(data)
+        for button in range(16):
+            row, col = pico_interface.input_interface(device_id, button)
+            pico_io.run(device_id, row, col, (0, 0, 0))
+        for item in data:
+            row, col = pico_interface.input_interface(item['d'], item['b'])
+            pico_io.run(device_id, row, col, item['c'])
+            time.sleep(0.05)
 
 
 start_new_thread(recv_data, (client_socket,))
