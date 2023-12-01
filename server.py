@@ -27,7 +27,8 @@ def threaded(client_socket, addr):
                 break
             print('>> Received from ' + addr[0], ':', addr[1], data)
             data = json.loads(data[0:data.index('}') + 1])
-            send_data = json.dumps(game_instance.main(pico_interface.input_interface(data['deviceID'], data['buttonID'])))
+            row, col = pico_interface.input_interface(data['deviceID'], data['buttonID'])
+            send_data = json.dumps(game_instance.main(row, col))
 
             client_socket.send(send_data.encode())
             for client in client_sockets:

@@ -1,4 +1,5 @@
 import random
+from pprint import pprint
 from typing import List, Tuple, Union
 
 from pico_interface import PicoInterface
@@ -75,7 +76,7 @@ class LaserGame:
         if self.mirror[x][y]:
             if self.mirror[x][y] == self.Item.MIRROR_LEFT2UP:
                 # print(f'row : {x}, col: {y}, install mirror type /')
-                device_id, button_id = self.pico_interface.input_interface(x, y)
+                device_id, button_id = self.pico_interface.output_interface(x, y)
                 self.send_data.append(dict(
                     rgb=self.RGB.MIRROR_LEFT2UP,
                     deviceID=device_id,
@@ -83,7 +84,7 @@ class LaserGame:
                 ))
             elif self.mirror[x][y] == self.Item.MIRROR_LEFT2DOWN:
                 # print(f'row : {x}, col: {y}, install mirror type \\')
-                device_id, button_id = self.pico_interface.input_interface(x, y)
+                device_id, button_id = self.pico_interface.output_interface(x, y)
                 self.send_data.append(dict(
                     rgb=self.RGB.MIRROR_LEFT2DOWN,
                     deviceID=device_id,
@@ -92,7 +93,7 @@ class LaserGame:
             direction = self.mirror_direction(x, y, direction)
         else:
             # print(f'row : {x}, col : {y}, install lazer')
-            device_id, button_id = self.pico_interface.input_interface(x, y)
+            device_id, button_id = self.pico_interface.output_interface(x, y)
             self.send_data.append(dict(
                 rgb=self.RGB.LASER,
                 deviceID=device_id,
@@ -132,22 +133,22 @@ class LaserGame:
     def input_mirror(self, x: int, y: int, mirror_type: str):
         self.mirror[x][y] = self.encode_input(mirror_type)
 
-    def pprint(self):
-        print("===========")
-        for i in self.p1_goalpost:
-            print("X" if i == -1 else "-" if not i else "X", end=" ")
-        print(" ")
-        for i in range(self.MAX_X):
-            for j in range(self.MAX_Y):
-                if self.mirror[i][j]:
-                    print("/" if self.mirror[i][j] == self.Item.MIRROR_LEFT2UP else "\\", end=" ")
-                else:
-                    print(self.laser[i][j], end=" ")
-            print()
-        for i in self.p2_goalpost:
-            print("X" if i == -1 else "-" if not i else "X", end=" ")
-        print(" ")
-        print("===========")
+    # def pprint(self):
+    #     print("===========")
+    #     for i in self.p1_goalpost:
+    #         print("X" if i == -1 else "-" if not i else "X", end=" ")
+    #     print(" ")
+    #     for i in range(self.MAX_X):
+    #         for j in range(self.MAX_Y):
+    #             if self.mirror[i][j]:
+    #                 print("/" if self.mirror[i][j] == self.Item.MIRROR_LEFT2UP else "\\", end=" ")
+    #             else:
+    #                 print(self.laser[i][j], end=" ")
+    #         print()
+    #     for i in self.p2_goalpost:
+    #         print("X" if i == -1 else "-" if not i else "X", end=" ")
+    #     print(" ")
+    #     print("===========")
 
     def main(self, row, col):
         flag = 1
@@ -156,6 +157,7 @@ class LaserGame:
             self.mirror[row][col] = 0
 
         self.dfs(0, self.MAX_Y // 2, self.Direction.DOWN)
+        pprint(self.send_data)
         return self.send_data
         # while True:
         #     player = [0]
@@ -187,4 +189,4 @@ class LaserGame:
 
 if __name__ == "__main__":
     laser_game = LaserGame()
-    laser_game.main()
+    laser_game.main(3, 3)

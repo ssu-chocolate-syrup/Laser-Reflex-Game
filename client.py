@@ -10,7 +10,7 @@ from config import Wifi
 from pico_interface import PicoInterface
 from pico_io import PicoIO
 
-DEVICE_ID = 3
+device_id = 3
 
 keypad = picokeypad.PicoKeypad()
 keypad.set_brightness(0)
@@ -56,8 +56,8 @@ def recv_data(client_socket):
             data = json.loads(data[0:data.index('}') + 1])
             print(data)
             for item in data['sendData']:
-                device_id, button_id = pico_interface.input_interface(item['deviceID'], item['buttonID'])
-                pico_io.run(device_id, button_id, DEVICE_ID, item['rgb'])
+                dvid, buttid = pico_interface.input_interface(item['deviceID'], item['buttonID'])
+                pico_io.run(dvid, buttid, device_id, item['rgb'])
         except json.decoder.JSONDecodeError:
             print(type(data))
             # pico_io.run(device_id)
