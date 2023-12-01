@@ -36,17 +36,17 @@ def threaded(client_socket, addr):
 
 
 print('>> Server Start with ip :', Server.HOST)
-game_instance=LaserGame()
-game_instance.main()
+# game_instance=LaserGame()
+# game_instance.main()
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 server_socket.bind((Server.HOST, Server.PORT))
-server_socket.listen5()
+server_socket.listen()
 
 try:
     while True:
-        client_socket, addr = server_s5ocket.accept()
-        client_sockets.append(client_5socket)
+        client_socket, addr = server_socket.accept()
+        client_sockets.append(client_socket)
         start_new_thread(threaded, (client_socket, addr))
         print("참가자 수 : ", len(client_sockets))
 except Exception as e:
