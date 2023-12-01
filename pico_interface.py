@@ -1,18 +1,4 @@
-import picokeypad
-
-keypad = picokeypad.PicoKeypad()
-keypad.set_brightness(1.0)
-
-
-class PicoIO:
-    # turn on LED
-    def set_led(self, num_pico, num_button, check_num_pico, rgb_code):
-        if num_pico == check_num_pico and 0 <= num_button < 16:
-            keypad.illuminate(num_button, *rgb_code)
-            keypad.update()
-            return 1
-        return 0
-
+class PicoInterface:
     # pico Pi signal to Matrix signal
     def input_interface(self, num_pico, num_button):
         k = num_pico // 2
@@ -35,8 +21,3 @@ class PicoIO:
             num_button = 4 * (3 - (col - 4)) + (row % 4)
 
         return num_pico, num_button
-
-    def run(self, check_num_pico, row, col, rgb_code):
-        num_pico, num_button = self.output_interface(row, col)
-        self.set_led(num_pico, num_button, check_num_pico, rgb_code)
-        return None

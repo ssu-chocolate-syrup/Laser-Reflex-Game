@@ -2,7 +2,7 @@ import socket
 import json
 from _thread import *
 from game import LaserGame
-from server_config import Server
+from config import Server
 
 client_sockets = []
 

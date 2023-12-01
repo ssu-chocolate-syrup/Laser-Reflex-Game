@@ -5,9 +5,10 @@ import socket
 from _thread import *
 import network
 
-from wifi_config import WIFI
-from server_config import Server
-from interface import PicoIO
+from config import Server
+from config import Wifi
+from pico_interface import PicoInterface
+from pico_io import PicoIO
 
 device_id = 3
 
@@ -18,32 +19,33 @@ wifi = network.WLAN(network.STA_IF)
 wifi.active(True)
 
 pico_io = PicoIO()
+pico_interface = PicoInterface()
 
 
-class CustomException:
+class ErrorException:
     def __init__(self, msg, button_id):
         self.msg = msg
         self.button_id = button_id
 
     def error(self):
         print(self.msg)
-        row, col = pico_io.input_interface(device_id, self.button_id)
+        row, col = pico_interface.input_interface(device_id, self.button_id)
         pico_io.run(device_id, row, col, [255, 0, 0])
 
 
 try:
-    wifi.connect(WIFI.SSID, WIFI.PW)
+    wifi.connect(Wifi.SSID, Wifi.PW)
     while not wifi.isconnected():
         pass
 except:
-    CustomException('WIFI Connection Failed', 0).error()
+    ErrorException('WIFI Connection Failed', 0).error()
 
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 try:
     client_socket.connect((Server.HOST, Server.PORT))
 except:
-    CustomException('Socket Connection Failed', 1).error()
+    ErrorException('Socket Connection Failed', 1).error()
 
 
 def recv_data(client_socket):
@@ -66,12 +68,12 @@ colour_index = 0
 
 print("Client Start")
 for button_id in range(16):
-    row, col = pico_io.input_interface(device_id, button_id)
+    row, col = pico_interface.input_interface(device_id, button_id)
     pico_io.run(device_id, row, col, (250, 146, 0))
     time.sleep(0.1)
 
 for button_id in range(16):
-    row, col = pico_io.input_interface(device_id, button_id)
+    row, col = pico_interface.input_interface(device_id, button_id)
     pico_io.run(device_id, row, col, (0, 0, 0))
 
 NUM_PADS = keypad.get_num_pads()
@@ -84,7 +86,7 @@ while True:
             for find in range(0, NUM_PADS):
                 if button_states & 0x01 > 0:
                     if not (button_states & (~0x01)) > 0:
-                        row, col = pico_io.input_interface(device_id, find)
+                        row, col = pico_interface.input_interface(device_id, find)
                         message = dict(deviceID=device_id,
                                        row=row,
                                        col=col)
