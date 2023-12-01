@@ -22,9 +22,11 @@ def threaded(client_socket, addr):
             print('>> Received from ' + addr[0], ':', addr[1], data)
             data = json.loads(data)
             row, col = pico_interface.input_interface(data['deviceID'], data['buttonID'])
-            if row != 0 and col != 0:
+            if row == 0 and col == 0:
+                send_data = json.dumps(game_instance.main())
+            else:
                 game_instance.input_mirror(row, col)
-            send_data = json.dumps(game_instance.main())
+                send_data = json.dumps(game_instance.main())
             #print("data send", send_data)
             client_socket.sendall(send_data.encode())
             for client in client_sockets:
