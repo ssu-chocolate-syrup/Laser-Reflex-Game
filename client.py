@@ -96,4 +96,4 @@ while True:
             message = dict(deviceID=device_id,
                            buttonID=button)
             message_json = json.dumps(message)
-            client_socket.send(message_json.encode())
+            client_socket.sendall(message_json.encode())
