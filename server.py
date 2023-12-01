@@ -1,12 +1,10 @@
 import socket
 import json
 from _thread import *
-
+from game import LaserGame
 from server_config import Server
-from interface import PicoIO
 
 client_sockets = []
-io = PicoIO()
 
 
 def push(device_id, button_id):
@@ -20,16 +18,12 @@ def threaded(client_socket, addr):
     while True:
         try:
             data = client_socket.recv(1024)
-
             if not data:
                 print('>> Disconnected by ' + addr[0], ':', addr[1])
                 break
             print('>> Received from ' + addr[0], ':', addr[1], data.decode())
 
-            client_socket.send(data)
-            for client in client_sockets:
-                if client != client_socket:
-                    client.send(data)
+
         except ConnectionResetError as e:
             print('>> Disconnected by ' + addr[0], ':', addr[1])
             break
@@ -42,15 +36,17 @@ def threaded(client_socket, addr):
 
 
 print('>> Server Start with ip :', Server.HOST)
+game_instance=LaserGame()
+game_instance.main()
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 server_socket.bind((Server.HOST, Server.PORT))
-server_socket.listen()
+server_socket.listen5()
 
 try:
     while True:
-        client_socket, addr = server_socket.accept()
-        client_sockets.append(client_socket)
+        client_socket, addr = server_s5ocket.accept()
+        client_sockets.append(client_5socket)
         start_new_thread(threaded, (client_socket, addr))
         print("참가자 수 : ", len(client_sockets))
 except Exception as e:
