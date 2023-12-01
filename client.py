@@ -50,14 +50,17 @@ except:
 
 def recv_data(client_socket):
     while True:
+        data = None
         try:
-            data = client_socket.recv(100).decode()
-            data = json.loads(data)
+            data = client_socket.recv(1024).decode()
+            data = json.loads(data[0:data.index('}') + 1])
             print(data)
-            if data['deviceID'] == device_id:
-                pico_io.run(device_id, data['row'], data['col'], [0, 255, 0])
-        except:
+            for item in data['sendData']:
+                dvid, buttid = pico_interface.input_interface(item['deviceID'], item['buttonID'])
+                pico_io.run(dvid, buttid, device_id, item['rgb'])
+        except json.decoder.JSONDecodeError:
             print(type(data))
+            # pico_io.run(device_id)
 
 
 start_new_thread(recv_data, (client_socket,))
@@ -86,10 +89,12 @@ while True:
             for find in range(0, NUM_PADS):
                 if button_states & 0x01 > 0:
                     if not (button_states & (~0x01)) > 0:
-                        row, col = pico_interface.input_interface(device_id, find)
+                        # row, col = pico_interface.input_interface(device_id, find)
+                        # message = dict(deviceID=device_id,
+                        #                row=row,
+                        #                col=col)
                         message = dict(deviceID=device_id,
-                                       row=row,
-                                       col=col)
+                                       buttonID=find)
                         recv_json = json.dumps(message)
                         client_socket.send(recv_json.encode())
                         lit = lit | (1 << button)
