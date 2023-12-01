@@ -1,5 +1,6 @@
 import socket
 import json
+import struct
 from _thread import *
 
 from game import LaserGame
@@ -15,7 +16,7 @@ def threaded(client_socket, addr):
     
     while True:
         try:
-            data = client_socket.recv(1024 * 10).decode()
+            data = client_socket.recv(1024).decode()
             if not data:
                 print('>> Disconnected by ' + addr[0], ':', addr[1])
                 break
@@ -23,15 +24,16 @@ def threaded(client_socket, addr):
             data = json.loads(data)
             row, col = pico_interface.input_interface(data['deviceID'], data['buttonID'])
             if row == 0 and col == 0:
-                send_data = json.dumps(game_instance.main())
+                send_data = json.dumps(game_instance.main()).encode()
             else:
                 game_instance.input_mirror(row, col)
-                send_data = json.dumps(game_instance.main())
-            #print("data send", send_data)
-            client_socket.sendall(send_data.encode())
+                send_data = json.dumps(game_instance.main()).encode()
+            client_socket.sendall(struct.pack('!I', len(send_data)))
+            client_socket.sendall(send_data)
             for client in client_sockets:
                 if client != client_socket:
-                    client.sendall(send_data.encode())
+                    client.sendall(struct.pack('!I', len(send_data)))
+                    client.sendall(send_data)
 
         except ConnectionResetError as e:
             print('>> Disconnected by ' + addr[0], ':', addr[1])
@@ -48,7 +50,9 @@ print('>> Server Start with ip :', Server.HOST)
 # game_instance.main()
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-server_socket.bind((Server.HOST, Server.PORT))
+server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 1024 * 10)
+server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 1024 * 10)
+server_socket.bind(('0.0.0.0', Server.PORT))
 server_socket.listen()
 
 try:
