@@ -22,6 +22,14 @@ pico_io = PicoIO()
 pico_interface = PicoInterface()
 
 
+def power_of_2(number):
+    count = 0
+    while number > 0:
+        number >>= 1
+        count += 1
+    return count - 1
+
+
 class ErrorException:
     def __init__(self, msg, button_id):
         self.msg = msg
@@ -67,10 +75,7 @@ def recv_data(client_socket):
 
 
 start_new_thread(recv_data, (client_socket,))
-
-lit = 0
 last_button_states = 0
-colour_index = 0
 
 print("Client Start")
 for button_id in range(16):
@@ -82,25 +87,13 @@ for button_id in range(16):
     row, col = pico_interface.input_interface(device_id, button_id)
     pico_io.run(device_id, row, col, (0, 0, 0))
 
-NUM_PADS = keypad.get_num_pads()
 while True:
     button_states = keypad.get_button_states()
     if last_button_states != button_states:
         last_button_states = button_states
         if button_states > 0:
-            button = 0
-            for find in range(0, NUM_PADS):
-                if button_states & 0x01 > 0:
-                    if not (button_states & (~0x01)) > 0:
-                        # row, col = pico_interface.input_interface(device_id, find)
-                        # message = dict(deviceID=device_id,
-                        #                row=row,
-                        #                col=col)
-                        message = dict(deviceID=device_id,
-                                       buttonID=find)
-                        recv_json = json.dumps(message)
-                        client_socket.send(recv_json.encode())
-                        lit = lit | (1 << button)
-                    break
-                button_states >>= 1
-                button += 1
+            button = power_of_2(button_states)
+            message = dict(deviceID=device_id,
+                           buttonID=button)
+            message_json = json.dumps(message)
+            client_socket.send(message_json.encode())
