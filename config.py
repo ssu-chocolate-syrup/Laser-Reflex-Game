@@ -10,6 +10,7 @@ class Wifi:
 
 class RGB:
     NONE = (0, 0, 0)
+    TIMER = (255, 255, 255)
     LASER = (250, 146, 0)
     MIRROR_LEFT2UP = (196, 4, 4)
     MIRROR_LEFT2DOWN = (0, 255, 0)

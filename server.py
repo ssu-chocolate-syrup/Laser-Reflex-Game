@@ -1,5 +1,7 @@
 import socket
 import json
+import time
+import threading
 import struct
 from _thread import *
 
@@ -7,63 +9,124 @@ from game import LaserGame
 from config import Server
 from pico_interface import PicoInterface
 
-game_instance = LaserGame()
-pico_interface = PicoInterface()
-client_sockets = []
 
+class LaserGameServer:
+    def __init__(self):
+        self.game_instance = LaserGame()
+        self.pico_interface = PicoInterface()
+        self.client_sockets = []
+        self.server_socket = None
 
-def threaded(client_socket, addr):
-    print('>> Connected by :', addr[0], ':', addr[1])
+    def recv_all(self, client_socket, byte_size):
+        data = b''
+        while len(data) < byte_size:
+            packet = client_socket.recv(byte_size - len(data))
+            if not packet:
+                return None
+            data += packet
+        return data
 
-    while True:
-        try:
-            data = client_socket.recv(1 << 6).decode()
-            if not data:
+    def recv_data(self, client_socket):
+        while True:
+            raw_msglen = self.recv_all(client_socket, 4)
+            msglen = struct.unpack('!I', raw_msglen)[0]
+            data = self.recv_all(client_socket, msglen).decode()
+            data = json.loads(data)
+            return data
+
+    def timer_thread_function(self, count):
+        time.sleep(3)
+        p1_pico_number_id, p1_pico_number_button = self.pico_interface.output_interface(12 - 1 - count, 8 - 1)
+        p2_pico_number_id, p2_pico_number_button = self.pico_interface.output_interface(count, 8 - 1)
+
+        send_data = [dict(
+            p1=dict(c='tf', d=p1_pico_number_id, b=p1_pico_number_button),
+            p2=dict(c='tf', d=p2_pico_number_id, b=p2_pico_number_button),
+        )]
+        send_data_json = json.dumps(send_data).encode()
+        # print(send_data_json)
+        for client in self.client_sockets:
+            client.sendall(struct.pack('!I', len(send_data_json)))
+            client.sendall(send_data_json)
+
+    def timer_thread(self, is_init, count):
+        if not is_init:
+            send_data = []
+            for p2_row in range(11, 7 - 1, -1):
+                p1_row = p2_row - 7
+                p1_pico_number_id, p1_pico_number_button = self.pico_interface.output_interface(p1_row, 8 - 1)
+                p2_pico_number_id, p2_pico_number_button = self.pico_interface.output_interface(p2_row, 8 - 1)
+                send_data.append(dict(
+                    p1=dict(c='tn', d=p1_pico_number_id, b=p1_pico_number_button),
+                    p2=dict(c='tn', d=p2_pico_number_id, b=p2_pico_number_button)
+                ))
+            send_data_json = json.dumps(send_data).encode()
+            # print(send_data_json)
+            for client in self.client_sockets:
+                client.sendall(struct.pack('!I', len(send_data_json)))
+                client.sendall(send_data_json)
+            self.timer_thread_function(count)
+            threading.Thread(target=self.timer_thread, args=(1, count - 1)).start()
+        else:
+            if count > 0:
+                self.timer_thread_function(count)
+                threading.Thread(target=self.timer_thread, args=(1, count - 1)).start()
+            elif count == 0:
+                self.timer_thread_function(count)
+                threading.Thread(target=self.timer_thread, args=(0, count + 4)).start()
+
+    def threaded(self, client_socket, addr):
+        print('>> Connected by :', addr[0], ':', addr[1])
+
+        while True:
+            try:
+                data = self.recv_data(client_socket)
+                print('>> Received from ' + addr[0], ':', addr[1], data)
+                row, col = self.pico_interface.input_interface(data['d'], data['b'])
+                if row == 0 and col == 0:
+                    send_data = json.dumps(self.game_instance.main()).encode()
+                else:
+                    self.game_instance.input_mirror(row, col)
+                    send_data = json.dumps(self.game_instance.main()).encode()
+                print(send_data)
+                client_socket.sendall(struct.pack('!I', len(send_data)))
+                client_socket.sendall(send_data)
+                for client in self.client_sockets:
+                    if client != client_socket:
+                        client.sendall(struct.pack('!I', len(send_data)))
+                        client.sendall(send_data)
+
+            except ConnectionResetError as e:
                 print('>> Disconnected by ' + addr[0], ':', addr[1])
                 break
-            print('>> Received from ' + addr[0], ':', addr[1], data)
-            data = json.loads(data[data.index('{'):data.index('}') + 1])
-            row, col = pico_interface.input_interface(data['d'], data['b'])
-            if row == 0 and col == 0:
-                send_data = json.dumps(game_instance.main()).encode()
-            else:
-                game_instance.input_mirror(row, col)
-                send_data = json.dumps(game_instance.main()).encode()
-            print(send_data)
-            client_socket.sendall(struct.pack('!I', len(send_data)))
-            client_socket.sendall(send_data)
-            for client in client_sockets:
-                if client != client_socket:
-                    client.sendall(struct.pack('!I', len(send_data)))
-                    client.sendall(send_data)
 
-        except ConnectionResetError as e:
-            print('>> Disconnected by ' + addr[0], ':', addr[1])
-            break
+        if client_socket in self.client_sockets:
+            self.client_sockets.remove(client_socket)
+            print('remove client list : ', len(self.client_sockets))
 
-    if client_socket in client_sockets:
-        client_sockets.remove(client_socket)
-        print('remove client list : ', len(client_sockets))
+        client_socket.close()
 
-    client_socket.close()
+    def start_server(self):
+        print('>> Server Start with ip :', Server.HOST)
+        self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 1 << 13)
+        self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 32)
+        self.server_socket.bind(('0.0.0.0', Server.PORT))
+        self.server_socket.listen()
+
+        try:
+            while True:
+                client_socket, addr = self.server_socket.accept()
+                self.client_sockets.append(client_socket)
+                start_new_thread(self.threaded, (client_socket, addr))
+                print("참가자 수 : ", len(self.client_sockets))
+        except Exception as e:
+            print('에러 : ', e)
+        finally:
+            self.server_socket.close()
 
 
-print('>> Server Start with ip :', Server.HOST)
-# game_instance.main()
-server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 1 << 13)
-server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 32)
-server_socket.bind(('0.0.0.0', Server.PORT))
-server_socket.listen()
-
-try:
-    while True:
-        client_socket, addr = server_socket.accept()
-        client_sockets.append(client_socket)
-        start_new_thread(threaded, (client_socket, addr))
-        print("참가자 수 : ", len(client_sockets))
-except Exception as e:
-    print('에러 : ', e)
-finally:
-    server_socket.close()
+if __name__ == "__main__":
+    game_server = LaserGameServer()
+    game_server.start_server()

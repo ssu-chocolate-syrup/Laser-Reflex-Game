@@ -70,8 +70,12 @@ class Client:
             data = json.loads(data)
             print(data)
             for button in range(16):
-                row, col = self.pico_interface.input_interface(self.device_id, button)
-                self.pico_io.run(self.device_id, row, col, self.rgb.NONE)
+                if self.device_id % 2 != 0:
+                    row, col = self.pico_interface.input_interface(self.device_id, button)
+                    self.pico_io.run(self.device_id, row, col, self.rgb.NONE)
+                else:
+                    if 0 <= button < 4:
+                        continue
             for item in data:
                 row, col = self.pico_interface.input_interface(item['d'], item['b'])
                 color = None
@@ -81,6 +85,10 @@ class Client:
                     color = self.rgb.MIRROR_LEFT2DOWN
                 elif item['c'] == 'l':
                     color = self.rgb.LASER
+                elif item['c'] == 'tn':
+                    color = self.rgb.TIMER
+                elif item['c'] == 'tf':
+                    color = self.rgb.NONE
                 self.pico_io.run(self.device_id, row, col, color)
                 time.sleep(0.05)
 
