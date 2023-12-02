@@ -16,7 +16,7 @@ def threaded(client_socket, addr):
     
     while True:
         try:
-            data = client_socket.recv(1 << 5).decode()
+            data = client_socket.recv(1 << 6).decode()
             if not data:
                 print('>> Disconnected by ' + addr[0], ':', addr[1])
                 break
