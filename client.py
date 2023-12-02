@@ -113,8 +113,9 @@ class Client:
                         button = power_of_2(button_states)
                         message = dict(d=self.device_id,
                                        b=button)
-                        message_json = json.dumps(message)
-                        self.client_socket.sendall(message_json.encode())
+                        message_json = json.dumps(message).encode()
+                        client.sendall(struct.pack('!I', len(message_json)))
+                        self.client_socket.sendall(message_json)
 
 
 class ErrorException(Client):

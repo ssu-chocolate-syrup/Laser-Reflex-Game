@@ -84,6 +84,7 @@ class LaserGameServer:
                 print('>> Received from ' + addr[0], ':', addr[1], data)
                 row, col = self.pico_interface.input_interface(data['d'], data['b'])
                 if row == 0 and col == 0:
+                    threading.Thread(target=self.timer_thread, args=(0, 4)).start()
                     send_data = json.dumps(self.game_instance.main()).encode()
                 else:
                     self.game_instance.input_mirror(row, col)
