@@ -11,9 +11,10 @@ game_instance = LaserGame()
 pico_interface = PicoInterface()
 client_sockets = []
 
+
 def threaded(client_socket, addr):
     print('>> Connected by :', addr[0], ':', addr[1])
-    
+
     while True:
         try:
             data = client_socket.recv(1 << 6).decode()
@@ -21,7 +22,7 @@ def threaded(client_socket, addr):
                 print('>> Disconnected by ' + addr[0], ':', addr[1])
                 break
             print('>> Received from ' + addr[0], ':', addr[1], data)
-            data = json.loads(data[data.index('{'):data.index('}')+1])
+            data = json.loads(data[data.index('{'):data.index('}') + 1])
             row, col = pico_interface.input_interface(data['d'], data['b'])
             if row == 0 and col == 0:
                 send_data = json.dumps(game_instance.main()).encode()

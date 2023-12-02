@@ -7,6 +7,7 @@ class Wifi:
     SSID = 'pqpq'
     PW = '@@@@@@@@'
 
+
 class RGB:
     NONE = (0, 0, 0)
     LASER = (250, 146, 0)
