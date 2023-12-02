@@ -39,10 +39,8 @@ class LaserGameServer:
         p1_pico_number_id, p1_pico_number_button = self.pico_interface.output_interface(12 - 1 - count, 8 - 1)
         p2_pico_number_id, p2_pico_number_button = self.pico_interface.output_interface(count, 8 - 1)
 
-        send_data = [dict(
-            p1=dict(c='tf', d=p1_pico_number_id, b=p1_pico_number_button),
-            p2=dict(c='tf', d=p2_pico_number_id, b=p2_pico_number_button),
-        )]
+        send_data = [dict(c='tf', d=p1_pico_number_id, b=p1_pico_number_button),
+                     dict(c='tf', d=p2_pico_number_id, b=p2_pico_number_button)]
         send_data_json = json.dumps(send_data).encode()
         # print(send_data_json)
         for client in self.client_sockets:
@@ -56,10 +54,8 @@ class LaserGameServer:
                 p1_row = p2_row - 7
                 p1_pico_number_id, p1_pico_number_button = self.pico_interface.output_interface(p1_row, 8 - 1)
                 p2_pico_number_id, p2_pico_number_button = self.pico_interface.output_interface(p2_row, 8 - 1)
-                send_data.append(dict(
-                    p1=dict(c='tn', d=p1_pico_number_id, b=p1_pico_number_button),
-                    p2=dict(c='tn', d=p2_pico_number_id, b=p2_pico_number_button)
-                ))
+                send_data.append(dict(c='tn', d=p1_pico_number_id, b=p1_pico_number_button))
+                send_data.append(dict(c='tn', d=p2_pico_number_id, b=p2_pico_number_button))
             send_data_json = json.dumps(send_data).encode()
             # print(send_data_json)
             for client in self.client_sockets:
