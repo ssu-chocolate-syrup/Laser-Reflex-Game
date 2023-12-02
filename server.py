@@ -34,42 +34,42 @@ class LaserGameServer:
             data = json.loads(data)
             return data
 
-    def timer_thread_function(self, count):
-        time.sleep(3)
-        p1_pico_number_id, p1_pico_number_button = self.pico_interface.output_interface(12 - 1 - count, 8 - 1)
-        p2_pico_number_id, p2_pico_number_button = self.pico_interface.output_interface(count, 8 - 1)
+    # def timer_thread_function(self, count):
+    #     time.sleep(3)
+    #     p1_pico_number_id, p1_pico_number_button = self.pico_interface.output_interface(12 - 1 - count, 8 - 1)
+    #     p2_pico_number_id, p2_pico_number_button = self.pico_interface.output_interface(count, 8 - 1)
 
-        send_data = [dict(c='tf', d=p1_pico_number_id, b=p1_pico_number_button),
-                     dict(c='tf', d=p2_pico_number_id, b=p2_pico_number_button)]
-        send_data_json = json.dumps(send_data).encode()
-        # print(send_data_json)
-        for client in self.client_sockets:
-            client.sendall(struct.pack('!I', len(send_data_json)))
-            client.sendall(send_data_json)
+    #     send_data = [dict(c='tf', d=p1_pico_number_id, b=p1_pico_number_button),
+    #                  dict(c='tf', d=p2_pico_number_id, b=p2_pico_number_button)]
+    #     send_data_json = json.dumps(send_data).encode()
+    #     # print(send_data_json)
+    #     for client in self.client_sockets:
+    #         client.sendall(struct.pack('!I', len(send_data_json)))
+    #         client.sendall(send_data_json)
 
-    def timer_thread(self, is_init, count):
-        if not is_init:
-            send_data = []
-            for p2_row in range(11, 7 - 1, -1):
-                p1_row = p2_row - 7
-                p1_pico_number_id, p1_pico_number_button = self.pico_interface.output_interface(p1_row, 8 - 1)
-                p2_pico_number_id, p2_pico_number_button = self.pico_interface.output_interface(p2_row, 8 - 1)
-                send_data.append(dict(c='tn', d=p1_pico_number_id, b=p1_pico_number_button))
-                send_data.append(dict(c='tn', d=p2_pico_number_id, b=p2_pico_number_button))
-            send_data_json = json.dumps(send_data).encode()
-            # print(send_data_json)
-            for client in self.client_sockets:
-                client.sendall(struct.pack('!I', len(send_data_json)))
-                client.sendall(send_data_json)
-            self.timer_thread_function(count)
-            threading.Thread(target=self.timer_thread, args=(1, count - 1)).start()
-        else:
-            if count > 0:
-                self.timer_thread_function(count)
-                threading.Thread(target=self.timer_thread, args=(1, count - 1)).start()
-            elif count == 0:
-                self.timer_thread_function(count)
-                threading.Thread(target=self.timer_thread, args=(0, count + 4)).start()
+    # def timer_thread(self, is_init, count):
+    #     if not is_init:
+    #         send_data = []
+    #         for p2_row in range(11, 7 - 1, -1):
+    #             p1_row = p2_row - 7
+    #             p1_pico_number_id, p1_pico_number_button = self.pico_interface.output_interface(p1_row, 8 - 1)
+    #             p2_pico_number_id, p2_pico_number_button = self.pico_interface.output_interface(p2_row, 8 - 1)
+    #             send_data.append(dict(c='tn', d=p1_pico_number_id, b=p1_pico_number_button))
+    #             send_data.append(dict(c='tn', d=p2_pico_number_id, b=p2_pico_number_button))
+    #         send_data_json = json.dumps(send_data).encode()
+    #         print(send_data_json)
+    #         for client in self.client_sockets:
+    #             client.sendall(struct.pack('!I', len(send_data_json)))
+    #             client.sendall(send_data_json)
+    #         self.timer_thread_function(count)
+    #         threading.Thread(target=self.timer_thread, args=(1, count - 1)).start()
+    #     else:
+    #         if count > 0:
+    #             self.timer_thread_function(count)
+    #             threading.Thread(target=self.timer_thread, args=(1, count - 1)).start()
+    #         elif count == 0:
+    #             self.timer_thread_function(count)
+    #             threading.Thread(target=self.timer_thread, args=(0, count + 4)).start()
 
     def threaded(self, client_socket, addr):
         print('>> Connected by :', addr[0], ':', addr[1])
@@ -80,7 +80,7 @@ class LaserGameServer:
                 print('>> Received from ' + addr[0], ':', addr[1], data)
                 row, col = self.pico_interface.input_interface(data['d'], data['b'])
                 if row == 0 and col == 0:
-                    threading.Thread(target=self.timer_thread, args=(0, 4)).start()
+                    # threading.Thread(target=self.timer_thread, args=(0, 4)).start()
                     send_data = json.dumps(self.game_instance.main()).encode()
                 else:
                     self.game_instance.input_mirror(row, col)
