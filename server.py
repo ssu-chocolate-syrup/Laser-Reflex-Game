@@ -16,18 +16,19 @@ def threaded(client_socket, addr):
     
     while True:
         try:
-            data = client_socket.recv(1024).decode()
+            data = client_socket.recv(1 << 5).decode()
             if not data:
                 print('>> Disconnected by ' + addr[0], ':', addr[1])
                 break
             print('>> Received from ' + addr[0], ':', addr[1], data)
             data = json.loads(data[data.index('{'):data.index('}')+1])
-            row, col = pico_interface.input_interface(data['deviceID'], data['buttonID'])
+            row, col = pico_interface.input_interface(data['d'], data['b'])
             if row == 0 and col == 0:
                 send_data = json.dumps(game_instance.main()).encode()
             else:
                 game_instance.input_mirror(row, col)
                 send_data = json.dumps(game_instance.main()).encode()
+            print(send_data)
             client_socket.sendall(struct.pack('!I', len(send_data)))
             client_socket.sendall(send_data)
             for client in client_sockets:
@@ -50,8 +51,8 @@ print('>> Server Start with ip :', Server.HOST)
 # game_instance.main()
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 1024 * 10)
-server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 1024 * 10)
+server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 1 << 13)
+server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 32)
 server_socket.bind(('0.0.0.0', Server.PORT))
 server_socket.listen()
 

@@ -8,6 +8,7 @@ import network
 
 from config import Server
 from config import Wifi
+from config import RGB
 from pico_interface import PicoInterface
 from pico_io import PicoIO
 
@@ -75,9 +76,16 @@ def recv_data(client_socket):
         data = json.loads(data)
         for button in range(16):
             row, col = pico_interface.input_interface(device_id, button)
-            pico_io.run(device_id, row, col, (0, 0, 0))
+            pico_io.run(device_id, row, col, RGB.NONE)
         for item in data:
             row, col = pico_interface.input_interface(item['d'], item['b'])
+            color = None
+            if item['c'] == '/':
+                color = RGB.MIRROR_LEFT2UP
+            elif item['c'] == '\\':
+                color = RGB.MIRROR_LEFT2DOWN
+            elif item['c'] == 'l':
+                color = RGB.LASER
             pico_io.run(device_id, row, col, item['c'])
             time.sleep(0.05)
 
@@ -88,12 +96,12 @@ last_button_states = 0
 print("Client Start")
 for button_id in range(16):
     row, col = pico_interface.input_interface(device_id, button_id)
-    pico_io.run(device_id, row, col, (250, 146, 0))
+    pico_io.run(device_id, row, col, RGB.LASER)
     time.sleep(0.1)
 
 for button_id in range(16):
     row, col = pico_interface.input_interface(device_id, button_id)
-    pico_io.run(device_id, row, col, (0, 0, 0))
+    pico_io.run(device_id, row, col, RGB.NONE)
 
 while True:
     button_states = keypad.get_button_states()
@@ -101,7 +109,7 @@ while True:
         last_button_states = button_states
         if button_states > 0:
             button = power_of_2(button_states)
-            message = dict(deviceID=device_id,
-                           buttonID=button)
+            message = dict(d=device_id,
+                           b=button)
             message_json = json.dumps(message)
             client_socket.sendall(message_json.encode())

@@ -3,13 +3,7 @@ from pprint import pprint
 from typing import List, Tuple, Union
 
 from pico_interface import PicoInterface
-
-
-class RGB:
-    LASER = (250, 146, 0)
-    MIRROR_LEFT2UP = (196, 4, 4)
-    MIRROR_LEFT2DOWN = (0, 255, 0)
-
+from config import RGB
 
 class Item:
     LASER = 0
@@ -78,7 +72,7 @@ class LaserGame:
                 # print(f'row : {x}, col: {y}, install mirror type /')
                 device_id, button_id = self.pico_interface.output_interface(x, y)
                 self.send_data.append(dict(
-                    c=self.RGB.MIRROR_LEFT2UP,
+                    c='/',
                     d=device_id,
                     b=button_id
                 ))
@@ -86,7 +80,7 @@ class LaserGame:
                 # print(f'row : {x}, col: {y}, install mirror type \\')
                 device_id, button_id = self.pico_interface.output_interface(x, y)
                 self.send_data.append(dict(
-                    c=self.RGB.MIRROR_LEFT2DOWN,
+                    c='\\',
                     d=device_id,
                     b=button_id
                 ))
@@ -95,7 +89,7 @@ class LaserGame:
             # print(f'row : {x}, col : {y}, install lazer')
             device_id, button_id = self.pico_interface.output_interface(x, y)
             self.send_data.append(dict(
-                c=self.RGB.LASER,
+                c='l',
                 d=device_id,
                 b=button_id
             ))
