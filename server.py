@@ -132,7 +132,7 @@ class LaserGameServer:
                 row, col = self.pico_interface.input_interface(data['d'], data['b'])
                 # 턴버튼 7,5 or 7,6으로 추가 effect_send함수 추가
                 if (row == 7 and col == 5) or (row == 7 and col == 6):
-                    threading.Thread(target=self.timer_thread, args=(0, 4)).start()
+                    ##threading.Thread(target=self.timer_thread, args=(0, 4)).start()
                     # 이펙트 전송 함수
                     self.effect_to_clients(client_socket,row,col)
 
