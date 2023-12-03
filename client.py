@@ -67,34 +67,36 @@ class Client:
             raw_message_len = self.recv_all(client_socket, 4)
             message_len = struct.unpack('!I', raw_message_len)[0]
             data = self.recv_all(client_socket, message_len).decode()
-            data = json.loads(data)
-            print(data)
-            for button in range(16):
-                if self.device_id % 2 != 0:
-                    row, col = self.pico_interface.input_interface(self.device_id, button)
-                    self.pico_io.run(self.device_id, row, col, self.rgb.NONE)
-                    time.sleep(0.03)
-                else:
-                    if 0 <= button < 4:
-                        continue
-            for item in data:
-                row, col = self.pico_interface.input_interface(item['d'], item['b'])
-                color_mapping = {
-                    'l': self.rgb.LASER,
-                    '/': self.rgb.MIRROR_LEFT2UP,
-                    '\\': self.rgb.MIRROR_LEFT2DOWN,
-                    'tn': self.rgb.TIMER,
-                    'tf': self.rgb.NONE,
-                    'p1': self.rgb.PLAYER1,
-                    'p2': self.rgb.PLAYER2
-                }
-                color = color_mapping.get(item['c'], None)
-                self.pico_io.run(self.device_id, row, col, color)
-                time.sleep(0.1)
+            return json.loads(data)
+
+    def processing(self, client_socket)
+        data = self.recv_data(client_socket)
+        # 불 끄기
+        for button in range(16):
+            if self.device_id % 2 == 0 and 0 <= button < 4:
+                continue
+            row, col = self.pico_interface.input_interface(self.device_id, button)
+            self.pico_io.run(self.device_id, row, col, self.rgb.NONE)
+            time.sleep(0.03)
+        # 불 켜기
+        for item in data:
+            row, col = self.pico_interface.input_interface(item['d'], item['b'])
+            color_mapping = {
+                'l': self.rgb.LASER,
+                '/': self.rgb.MIRROR_LEFT2UP,
+                '\\': self.rgb.MIRROR_LEFT2DOWN,
+                'tn': self.rgb.TIMER,
+                'tf': self.rgb.NONE,
+                'p1': self.rgb.PLAYER1,
+                'p2': self.rgb.PLAYER2
+            }
+            color = color_mapping.get(item['c'], None)
+            self.pico_io.run(self.device_id, row, col, color)
+            time.sleep(0.1)
 
     def start(self):
         if self._socket_conn():
-            start_new_thread(self.recv_data, (self.client_socket,))
+            start_new_thread(self.processing, (self.client_socket,))
             last_button_states = 0
             print("Client Start")
             for button_id in range(16):
