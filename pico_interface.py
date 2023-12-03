@@ -1,6 +1,7 @@
 class PicoInterface:
     # pico Pi signal to Matrix signal
-    def input_interface(self, num_pico, num_button):
+    @staticmethod
+    def input_interface(num_pico, num_button):
         k = num_pico // 2
         if num_pico % 2 == 1:
             row = (3 - (num_button % 4)) + (k * 4)
@@ -12,7 +13,8 @@ class PicoInterface:
         return row, col
 
     # Matrix signal to pico Pi signal
-    def output_interface(self, row, col):
+    @staticmethod
+    def output_interface(row, col):
         if col < 4:
             num_pico = 2 * (row // 4 + 1) - 1
             num_button = 4 * col + (3 - (row % 4))

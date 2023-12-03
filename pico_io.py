@@ -9,7 +9,8 @@ interface = PicoInterface()
 
 class PicoIO:
     # turn on LED
-    def set_led(self, num_pico, num_button, check_num_pico, rgb_code):
+    @staticmethod
+    def set_led(num_pico, num_button, check_num_pico, rgb_code):
         if num_pico == check_num_pico and 0 <= num_button < 16:
             keypad.illuminate(num_button, *rgb_code)
             keypad.update()
