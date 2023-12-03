@@ -1,10 +1,10 @@
 import time
 import json
-import picokeypad
 import socket
 import struct
 from _thread import *
 import network
+import picokeypad
 
 from config import Server
 from config import Wifi

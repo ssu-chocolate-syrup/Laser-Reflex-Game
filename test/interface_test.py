@@ -1,6 +1,7 @@
+import time
+
 from pico_interface import PicoInterface
 from pico_io import PicoIO
-import time
 
 io = PicoIO()
 interface = PicoInterface()
