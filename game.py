@@ -131,7 +131,7 @@ class LaserGame:
             self.mirror[row][col] = 0
           
     def goal_check(self) -> int:
-        row,col=output_interface(0,self.send_data[-1]['d'],self.send_data[-1]['b'])
+        row,col=self.pico_interface.output_interface(self.send_data[-1]['d'],self.send_data[-1]['b'])
         ##p2의 골대에 레이저 닿았을경우
         if (row==11):
             if self.p1goalpost[col]==1:
@@ -141,7 +141,7 @@ class LaserGame:
                 ##아니면 0리턴
                 return 0
         ##p1의 골대에 레이저 닿았을 경우
-        else if (row==0):
+        elif (row==0):
             if self.p2goalpost[col]==1:
                 ##맞으면 2리턴
                 return 2
@@ -212,4 +212,3 @@ if __name__ == "__main__":
     pprint(laser_game.main())
     print('-' * 20)
 
-.
