@@ -65,9 +65,9 @@ class Client:
 
     def recv_data(self, client_socket):
         while True:
-            raw_msglen = self.recv_all(client_socket, 4)
-            msglen = struct.unpack('!I', raw_msglen)[0]
-            data = self.recv_all(client_socket, msglen).decode()
+            raw_message_len = self.recv_all(client_socket, 4)
+            message_len = struct.unpack('!I', raw_message_len)[0]
+            data = self.recv_all(client_socket, message_len).decode()
             data = json.loads(data)
             print(data)
             for button in range(16):
@@ -95,6 +95,10 @@ class Client:
                     color = self.rgb.TIMER
                 elif item['c'] == 'tf':
                     color = self.rgb.NONE
+                elif item['c'] == 'p1':
+                    color = self.rgb.PLAYER1
+                elif item['c'] == 'p2':
+                    color = self.rgb.PLAYER2
                 self.pico_io.run(self.device_id, row, col, color)
                 time.sleep(0.1)
 

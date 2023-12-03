@@ -16,6 +16,7 @@ class LaserGameServer:
         self.pico_interface = PicoInterface()
         self.client_sockets = []
         self.server_socket = None
+        self.turn_end_button_cnt = 0
 
     def recv_all(self, client_socket, byte_size):
         data = b''
@@ -28,121 +29,108 @@ class LaserGameServer:
 
     def recv_data(self, client_socket):
         while True:
-            raw_msglen = self.recv_all(client_socket, 4)
-            msglen = struct.unpack('!I', raw_msglen)[0]
-            data = self.recv_all(client_socket, msglen).decode()
+            raw_message_len = self.recv_all(client_socket, 4)
+            message_len = struct.unpack('!I', raw_message_len)[0]
+            data = self.recv_all(client_socket, message_len).decode()
             data = json.loads(data)
             return data
 
-    def timer_thread_function(self, count):
-        time.sleep(3)
-        p1_pico_number_id, p1_pico_number_button = self.pico_interface.output_interface(12 - 1 - count, 8 - 1)
-        p2_pico_number_id, p2_pico_number_button = self.pico_interface.output_interface(count, 8 - 1)
+    # def timer_thread_function(self, count):
+    #     time.sleep(3)
+    #     p1_pico_number_id, p1_pico_number_button = self.pico_interface.output_interface(12 - 1 - count, 8 - 1)
+    #     p2_pico_number_id, p2_pico_number_button = self.pico_interface.output_interface(count, 8 - 1)
+    #
+    #     send_data = [dict(c='tf', d=p1_pico_number_id, b=p1_pico_number_button),
+    #                  dict(c='tf', d=p2_pico_number_id, b=p2_pico_number_button)]
+    #     send_data_json = json.dumps(send_data).encode()
+    #     print(send_data_json)
+    #     for client in self.client_sockets:
+    #         client.sendall(struct.pack('!I', len(send_data_json)))
+    #         client.sendall(send_data_json)
+    #
+    # def timer_thread(self, is_init, count):
+    #     if not is_init:
+    #         send_data = []
+    #         for p2_row in range(11, 7 - 1, -1):
+    #             p1_row = p2_row - 7
+    #             p1_pico_number_id, p1_pico_number_button = self.pico_interface.output_interface(p1_row, 8 - 1)
+    #             p2_pico_number_id, p2_pico_number_button = self.pico_interface.output_interface(p2_row, 8 - 1)
+    #             send_data.append(dict(c='tn', d=p1_pico_number_id, b=p1_pico_number_button))
+    #             send_data.append(dict(c='tn', d=p2_pico_number_id, b=p2_pico_number_button))
+    #         send_data_json = json.dumps(send_data).encode()
+    #         print(send_data_json)
+    #         for client in self.client_sockets:
+    #             client.sendall(struct.pack('!I', len(send_data_json)))
+    #             client.sendall(send_data_json)
+    #         self.timer_thread_function(count)
+    #         threading.Thread(target=self.timer_thread, args=(1, count - 1)).start()
+    #     else:
+    #         if count > 0:
+    #             self.timer_thread_function(count)
+    #             threading.Thread(target=self.timer_thread, args=(1, count - 1)).start()
+    #         elif count == 0:
+    #             self.timer_thread_function(count)
+    #             threading.Thread(target=self.timer_thread, args=(0, count + 4)).start()
 
-        send_data = [dict(c='tf', d=p1_pico_number_id, b=p1_pico_number_button),
-                     dict(c='tf', d=p2_pico_number_id, b=p2_pico_number_button)]
-        send_data_json = json.dumps(send_data).encode()
-        print(send_data_json)
-        for client in self.client_sockets:
-            client.sendall(struct.pack('!I', len(send_data_json)))
-            client.sendall(send_data_json)
-
-    def timer_thread(self, is_init, count):
-        if not is_init:
-            send_data = []
-            for p2_row in range(11, 7 - 1, -1):
-                p1_row = p2_row - 7
-                p1_pico_number_id, p1_pico_number_button = self.pico_interface.output_interface(p1_row, 8 - 1)
-                p2_pico_number_id, p2_pico_number_button = self.pico_interface.output_interface(p2_row, 8 - 1)
-                send_data.append(dict(c='tn', d=p1_pico_number_id, b=p1_pico_number_button))
-                send_data.append(dict(c='tn', d=p2_pico_number_id, b=p2_pico_number_button))
-            send_data_json = json.dumps(send_data).encode()
-            print(send_data_json)
-            for client in self.client_sockets:
-                client.sendall(struct.pack('!I', len(send_data_json)))
-                client.sendall(send_data_json)
-            self.timer_thread_function(count)
-            threading.Thread(target=self.timer_thread, args=(1, count - 1)).start()
-        else:
-            if count > 0:
-                self.timer_thread_function(count)
-                threading.Thread(target=self.timer_thread, args=(1, count - 1)).start()
-            elif count == 0:
-                self.timer_thread_function(count)
-                threading.Thread(target=self.timer_thread, args=(0, count + 4)).start()
+    @staticmethod
+    def send_data_to_client(client, data):
+        client.sendall(struct.pack('!I', len(data)))
+        client.sendall(data)
 
     # 반복되는 전송 처리해주기위해 함수 처리
     def send_to_pico(self, client_socket, send_data):
         print(send_data)
         ## 실제 전송
-        client_socket.sendall(struct.pack('!I', len(send_data)))
-        client_socket.sendall(send_data)
+        self.send_data_to_client(client_socket, send_data)
         for client in self.client_sockets:
             if client != client_socket:
-                client.sendall(struct.pack('!I', len(send_data)))
-                client.sendall(send_data)
+                self.send_data_to_client(client, send_data)
 
     # 승리 이펙트 계산함수 (effect_type이 모든 피코파이의 button_num=0에 도달하면, 각 client에서 이펙트 실행)
     def win_effect(self, player):
-        send_data = []
-        if player == 1:
-            effect_type = ''  # effect type 추가해주세요, player1
-        elif player == 2:
-            effect_type = ''  # effect type 추가해주세요, player2
-        for i in range(6):
-            send_data.append(dict(
-                c=effect_type,
-                d=i,
-                b=0
-            ))
-        return send_data
-
-    # 승리 이펙트 전송함수
-    def effect_to_clients(self, client_socket,row,col):
-        self.game_instance.input_mirror(row, col)
-        self.game_instance.main()
-        check = self.game_instance.goal_check()
-        if check == 1:  # p1이 승리
-            send_data = json.dumps(self.win_effect(1))
-            self.send_to_pico(client_socket, send_data)
-            time.sleep(1)
-            # 이펙트 출력 완료까지 대기
-            time.sleep(1)
-
-        elif check == 2:  # p2가 승리
-            send_data = json.dumps(self.win_effect(2))
-            self.send_to_pico(client_socket, send_data)
-            # 이펙트 출력 완료까지 대기
-            time.sleep(1)
+        return [dict(c='p1' if player == 1 else 'p2',
+                     d=device_id,
+                     b=15)
+                for device_id in range(1, 6 + 1)]
 
     # dfs 전송 함수
-    def dfs_to_clients(self, client_socket, row, col):
-        self.game_instance.input_mirror(row, col)
-        self.game_instance.main()
+    def dfs_to_clients(self, client_socket):
         send_data = json.dumps(self.game_instance.main()).encode()
         self.send_to_pico(client_socket, send_data)
 
     def threaded(self, client_socket, addr):
         print('>> Connected by :', addr[0], ':', addr[1])
-
         while True:
             try:
-                data = self.recv_data(client_socket)
-                print('>> Received from ' + addr[0], ':', addr[1], data)
-                row, col = self.pico_interface.input_interface(data['d'], data['b'])
-                # 턴버튼 7,5 or 7,6으로 추가 effect_send함수 추가
-                if (row == 7 and col == 5) or (row == 7 and col == 6):
-                    ##threading.Thread(target=self.timer_thread, args=(0, 4)).start()
-                    # 이펙트 전송 함수
-                    self.effect_to_clients(client_socket,row,col)
-
-                    # dfs 전송 함수
-                    self.dfs_to_clients(client_socket, row, col)
-                    time.sleep(1)
-
+                button_input_data = self.recv_data(client_socket)
+                print('>> Received from ' + addr[0], ':', addr[1], button_input_data)
+                row, col = self.pico_interface.input_interface(button_input_data['d'], button_input_data['b'])
+                # 턴 종료 버튼을 눌렀을 때
+                if (row == 5 and col == 7) or (row == 6 and col == 7):
+                    if self.turn_end_button_cnt == 0:
+                        self.dfs_to_clients(client_socket)
+                        self.turn_end_button_cnt += 1
+                    # Player1의 턴이 끝났을 때
+                    elif self.turn_end_button_cnt == 1:
+                        self.turn_end_button_cnt += 1
+                    # Player2의 턴이 끝났을 때
+                    elif self.turn_end_button_cnt == 2:
+                        self.turn_end_button_cnt -= 1
+                    goal_check = self.game_instance.goal_check()
+                    if goal_check['result']:
+                        self.turn_end_button_cnt = 0
+                        send_data = json.dumps(self.win_effect(goal_check['player']))
+                        self.game_instance.init()
+                    else:
+                        send_data = json.dumps(
+                            dict(c=f'p{self.turn_end_button_cnt}',
+                                 d=button_input_data['d'],
+                                 b=button_input_data['b'])
+                        )
+                    self.send_to_pico(client_socket, send_data)
                 else:
-                    # dfs 전송함수
-                    self.dfs_to_clients(client_socket, row, col)
+                    self.game_instance.input_mirror(row, col)
+                    self.dfs_to_clients(client_socket)
 
             except ConnectionResetError as e:
                 print('>> Disconnected by ' + addr[0], ':', addr[1])

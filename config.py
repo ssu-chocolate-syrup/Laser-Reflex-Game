@@ -9,6 +9,8 @@ class Wifi:
 
 
 class RGB:
+    PLAYER1 = (33, 118, 255)
+    PLAYER2 = (255, 15, 83)
     NONE = (0, 0, 0)
     TIMER = (255, 255, 255)
     LASER = (250, 146, 0)

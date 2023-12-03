@@ -5,6 +5,7 @@ from typing import List, Tuple, Union
 from pico_interface import PicoInterface
 from config import RGB
 
+
 class Item:
     LASER = 0
     MIRROR_LEFT2UP = 1
@@ -18,21 +19,19 @@ class Direction:
     RIGHT = 3
 
 
-
 class LaserGame:
-    def __init__(self, max_x: int = 12, max_y: int = 7):
-        self.MAX_X = max_x
-        self.MAX_Y = max_y
-        self.p1_goalpost = [-1 for _ in range(self.MAX_Y)]
-        self.p2_goalpost = [-1 for _ in range(self.MAX_Y)]
-        self.mirror = [[0] * self.MAX_Y for _ in range(self.MAX_X)]
-        self.laser = [[0] * self.MAX_Y for _ in range(self.MAX_X)]
+    def __init__(self, MAX_ROW: int = 12, MAX_COL: int = 7):
+        self.MAX_ROW = MAX_ROW
+        self.MAX_COL = MAX_COL
+        self.p1_goalpost = [-1 for _ in range(self.MAX_COL)]
+        self.p2_goalpost = [-1 for _ in range(self.MAX_COL)]
+        self.mirror = None
+        self.laser = None
         self.pico_interface = PicoInterface()
         self.RGB = RGB()
         self.Item = Item()
         self.Direction = Direction()
         self.init()
-        self.set_goalpost()
         self.send_data = []
 
     def set_goalpost(self):
@@ -45,50 +44,33 @@ class LaserGame:
         return user_goalpost_arr.index(1)
 
     # 레이저 방향을 바꿔주는 함수
-    def mirror_direction(self, x: int, y: int, direction: int) -> int:
+    def mirror_direction(self, row: int, col: int, direction: int) -> int:
         # 거울이 / 일때 방향 설정
-        if self.mirror[x][y] == self.Item.MIRROR_LEFT2UP:
+        if self.mirror[row][col] == self.Item.MIRROR_LEFT2UP:
             directional_response = {self.Direction.LEFT: self.Direction.DOWN,
                                     self.Direction.DOWN: self.Direction.LEFT,
                                     self.Direction.RIGHT: self.Direction.UP,
                                     self.Direction.UP: self.Direction.RIGHT}
             return directional_response[direction]
         # 거울이 \ 일때 방향 설정
-        elif self.mirror[x][y] == self.Item.MIRROR_LEFT2DOWN:
+        elif self.mirror[row][col] == self.Item.MIRROR_LEFT2DOWN:
             directional_response = {self.Direction.LEFT: self.Direction.UP,
                                     self.Direction.UP: self.Direction.LEFT,
                                     self.Direction.RIGHT: self.Direction.DOWN,
                                     self.Direction.DOWN: self.Direction.RIGHT}
             return directional_response[direction]
 
-    def dfs(self, x: int, y: int, direction: int) -> Tuple[int, int]:
-        if x <= -1 or x >= self.MAX_X:
-            return (x + 1, y) if x == -1 else (x - 1, y)
-        if y <= -1 or y >= self.MAX_Y:
-            return (-1, -1)
+    def dfs(self, row: int, col: int, direction: int) -> Tuple[int, int]:
+        if row <= -1 or row >= self.MAX_ROW:
+            return (row + 1, col) if row == -1 else (row - 1, col)
+        if col <= -1 or col >= self.MAX_COL:
+            return -1, -1
 
-        self.laser[x][y] = 1
-        if self.mirror[x][y]:
-            if self.mirror[x][y] == self.Item.MIRROR_LEFT2UP:
-                # print(f'row : {x}, col: {y}, install mirror type /')
-                device_id, button_id = self.pico_interface.output_interface(x, y)
-                '''self.send_data.append(dict(
-                    c='/',
-                    d=device_id,
-                    b=button_id
-                ))'''
-            elif self.mirror[x][y] == self.Item.MIRROR_LEFT2DOWN:
-                # print(f'row : {x}, col: {y}, install mirror type \\')
-                device_id, button_id = self.pico_interface.output_interface(x, y)
-                '''self.send_data.append(dict(
-                    c='\\',
-                    d=device_id,
-                    b=button_id
-                ))'''
-            direction = self.mirror_direction(x, y, direction)
+        self.laser[row][col] = 1
+        if self.mirror[row][col]:
+            direction = self.mirror_direction(row, col, direction)
         else:
-            # print(f'row : {x}, col : {y}, install lazer')
-            device_id, button_id = self.pico_interface.output_interface(x, y)
+            device_id, button_id = self.pico_interface.output_interface(row, col)
             self.send_data.append(dict(
                 c='l',
                 d=device_id,
@@ -96,107 +78,48 @@ class LaserGame:
             ))
 
         if direction == self.Direction.LEFT:
-            return self.dfs(x, y - 1, direction)
+            return self.dfs(row, col - 1, direction)
         elif direction == self.Direction.RIGHT:
-            return self.dfs(x, y + 1, direction)
+            return self.dfs(row, col + 1, direction)
         elif direction == self.Direction.DOWN:
-            return self.dfs(x + 1, y, direction)
+            return self.dfs(row + 1, col, direction)
         elif direction == self.Direction.UP:
-            return self.dfs(x - 1, y, direction)
-        return (0, 0)
+            return self.dfs(row - 1, col, direction)
+        return 0, 0
 
     def init(self):
+        self.mirror = [[0] * self.MAX_COL for _ in range(self.MAX_ROW)]
+        self.laser = [[0] * self.MAX_COL for _ in range(self.MAX_ROW)]
         for row in self.laser:
-            row[self.MAX_Y // 2] = 1
+            row[self.MAX_COL // 2] = 1
+        self.set_goalpost()
 
-    def goalin(self, coordinate: Tuple[int, int]):
+    def goal_in(self, coordinate: Tuple[int, int]):
         row, col = coordinate
         if row == 0 and col != self.get_goalpost_x(self.p1_goalpost):
             self.p1_goalpost[col] = 0
-        if row == self.MAX_Y - 1 and col != self.get_goalpost_x(self.p2_goalpost):
+        if row == self.MAX_COL - 1 and col != self.get_goalpost_x(self.p2_goalpost):
             self.p2_goalpost[col] = 0
 
         if row == 0 and col == self.get_goalpost_x(self.p1_goalpost):
             return dict(result=True, player=2)
-        if row == self.MAX_Y - 1 and col == self.get_goalpost_x(self.p2_goalpost):
+        if row == self.MAX_COL - 1 and col == self.get_goalpost_x(self.p2_goalpost):
             return dict(result=True, player=1)
-        return dict(result=False, player=0)
-
-    def encode_input(self, mirror_type: str) -> int:
-        return self.Item.MIRROR_LEFT2UP if mirror_type == '/' else self.Item.MIRROR_LEFT2DOWN
+        return dict(result=False, player=-1)
 
     def input_mirror(self, row: int, col: int):
         self.mirror[row][col] += 1
         if self.mirror[row][col] > 2:
             self.mirror[row][col] = 0
-          
-    def goal_check(self) -> int:
-        row,col=self.pico_interface.output_interface(self.send_data[-1]['d'],self.send_data[-1]['b'])
-        ##p2의 골대에 레이저 닿았을경우
-        if (row==11):
-            if self.p1goalpost[col]==1:
-                ##맞으면 1리턴
-                return 1
-            else :
-                ##아니면 0리턴
-                return 0
-        ##p1의 골대에 레이저 닿았을 경우
-        elif (row==0):
-            if self.p2goalpost[col]==1:
-                ##맞으면 2리턴
-                return 2
-            else :
-                ##아니면 0리턴
-                return 0
-    
 
-    # def pprint(self):
-    #     print("===========")
-    #     for i in self.p1_goalpost:
-    #         print("X" if i == -1 else "-" if not i else "X", end=" ")
-    #     print(" ")
-    #     for i in range(self.MAX_X):
-    #         for j in range(self.MAX_Y):
-    #             if self.mirror[i][j]:
-    #                 print("/" if self.mirror[i][j] == self.Item.MIRROR_LEFT2UP else "\\", end=" ")
-    #             else:
-    #                 print(self.laser[i][j], end=" ")
-    #         print()
-    #     for i in self.p2_goalpost:
-    #         print("X" if i == -1 else "-" if not i else "X", end=" ")
-    #     print(" ")
-    #     print("===========")
+    def goal_check(self):
+        row_col = self.pico_interface.output_interface(self.send_data[-1]['d'], self.send_data[-1]['b'])
+        return self.goal_in(row_col)
 
     def main(self):
         self.send_data = []
-        self.dfs(0, self.MAX_Y // 2, self.Direction.DOWN)
+        self.dfs(0, self.MAX_COL // 2, self.Direction.DOWN)
         return self.send_data
-        # while True:
-        #     player = [0]
-        #     self.pprint()
-        #     cmd = input(f"플레이어{flag} 공격 턴: (install/update/break): ")
-        #     if cmd == "install":
-        #         x, y, mirror_type = map(str, input().split())
-        #         self.input_mirror(int(x), int(y), mirror_type)
-        #     elif cmd == "update":
-        #         x, y = map(int, input().split())
-        #         if self.mirror[x][y] == self.Item.MIRROR_LEFT2UP:
-        #             self.input_mirror(x, y, '\\')
-        #         else:
-        #             self.input_mirror(x, y, '/')
-        #     elif cmd == "break":
-        #         break
-        #     else:
-        #         print("다시 입력해주세요")
-        #         continue
-        #     flag = 2 if flag == 1 else 1
-        #     for row in self.laser:
-        #         for j in range(self.MAX_Y):
-        #             row[j] = 0
-        #     result = self.goalin(self.dfs(0, self.MAX_Y // 2, self.Direction.DOWN))
-        #     if result['result']:
-        #         print(f"플레이어{result['player']}이 승리했습니다!")
-        #         break
 
 
 if __name__ == "__main__":
@@ -211,4 +134,3 @@ if __name__ == "__main__":
     laser_game.input_mirror(1, 0)
     pprint(laser_game.main())
     print('-' * 20)
-
