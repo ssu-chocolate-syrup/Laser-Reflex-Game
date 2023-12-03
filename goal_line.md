@@ -14,7 +14,11 @@ def validate_input_for_main(x, y):
             # 입력된 x, y가 유효한지 확인합니다.
             if not validate_input_for_main(x, y):
                 continue
-
+elif cmd == "update":
+            x, y = map(int, input().split())
+            # 입력된 x, y가 유효한지 확인합니다.
+            if not validate_input_for_main(x, y):
+                continue
 
 def main():
     init()
