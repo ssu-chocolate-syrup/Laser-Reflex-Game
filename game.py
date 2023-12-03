@@ -98,12 +98,12 @@ class LaserGame:
         row, col = coordinate
         if row == 0 and col != self.get_goalpost_x(self.p1_goalpost):
             self.p1_goalpost[col] = 0
-        if row == self.MAX_COL - 1 and col != self.get_goalpost_x(self.p2_goalpost):
+        if row == self.MAX_ROW - 1 and col != self.get_goalpost_x(self.p2_goalpost):
             self.p2_goalpost[col] = 0
 
         if row == 0 and col == self.get_goalpost_x(self.p1_goalpost):
             return dict(result=True, player=2)
-        if row == self.MAX_COL - 1 and col == self.get_goalpost_x(self.p2_goalpost):
+        if row == self.MAX_ROW - 1 and col == self.get_goalpost_x(self.p2_goalpost):
             return dict(result=True, player=1)
         return dict(result=False, player=-1)
 
