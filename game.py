@@ -118,6 +118,13 @@ class LaserGame:
 
     def main(self):
         self.send_data = []
+        for row in range(self.MAX_ROW):
+            for col in range(self.MAX_COL):
+                if self.mirror[row][col]:
+                    mirror_type = '/' if self.mirror[row][col] == self.Item.MIRROR_LEFT2UP else '\\'
+                    device_id, button_id = self.pico_interface.output_interface(row, col)                    
+                    data_entry = {'c': mirror_type, 'd': device_id, 'b': button_id}
+                    self.send_data.append(data_entry)
         self.dfs(0, self.MAX_COL // 2, self.Direction.DOWN)
         return self.send_data
 

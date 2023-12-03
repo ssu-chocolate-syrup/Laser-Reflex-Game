@@ -24,7 +24,6 @@ def power_of_2(number):
 class Client:
     def __init__(self, device_id):
         self.device_id = device_id
-        self.mirror = [[0] * 4 for _ in range(4)]
         self.keypad = picokeypad.PicoKeypad()
         self.keypad.set_brightness(0)
         self.wifi = network.WLAN(network.STA_IF)
@@ -78,27 +77,18 @@ class Client:
                 else:
                     if 0 <= button < 4:
                         continue
-            for row in range(4):
-                for col in range(4):
-                    if self.mirror[row][col] == 1:
-                        self.pico_io.run(self.device_id, row, col, self.rgb.MIRROR_LEFT2UP)
-                    elif self.mirror[row][col] == 2:
-                        self.pico_io.run(self.device_id, row, col, self.rgb.MIRROR_LEFT2DOWN)
-                    else:
-                        self.pico_io.run(self.device_id, row, col, self.rgb.NONE)
             for item in data:
                 row, col = self.pico_interface.input_interface(item['d'], item['b'])
-                color = None
-                if item['c'] == 'l':
-                    color = self.rgb.LASER
-                elif item['c'] == 'tn':
-                    color = self.rgb.TIMER
-                elif item['c'] == 'tf':
-                    color = self.rgb.NONE
-                elif item['c'] == 'p1':
-                    color = self.rgb.PLAYER1
-                elif item['c'] == 'p2':
-                    color = self.rgb.PLAYER2
+                color_mapping = {
+                    'l': self.rgb.LASER,
+                    '/': self.rgb.MIRROR_LEFT2UP,
+                    '\\': self.rgb.MIRROR_LEFT2DOWN,
+                    'tn': self.rgb.TIMER,
+                    'tf': self.rgb.NONE,
+                    'p1': self.rgb.PLAYER1,
+                    'p2': self.rgb.PLAYER2
+                }
+                color = color_mapping.get(item['c'], None)
                 self.pico_io.run(self.device_id, row, col, color)
                 time.sleep(0.1)
 
@@ -121,9 +111,6 @@ class Client:
                     last_button_states = button_states
                     if button_states > 0:
                         button = power_of_2(button_states)
-                        self.mirror[row][col] += 1
-                        if self.mirror[row][col] > 2:
-                            self.mirror[row][col] = 0
                         message = dict(d=self.device_id,
                                        b=button)
                         message_json = json.dumps(message).encode()
