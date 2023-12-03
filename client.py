@@ -110,7 +110,33 @@ class Client:
             while True:
                 button_states = self.keypad.get_button_states()
                 if last_button_states != button_states:
+                    last_button_states = button_states    def start(self):
+        if self._socket_conn():
+            start_new_thread(self.recv_data, (self.client_socket,))
+            last_button_states = 0
+            print("Client Start")
+            for button_id in range(16):
+                row, col = self.pico_interface.input_interface(self.device_id, button_id)
+                self.pico_io.run(self.device_id, row, col, self.rgb.LASER)
+                time.sleep(0.1)
+            for button_id in range(16):
+                row, col = self.pico_interface.input_interface(self.device_id, button_id)
+                self.pico_io.run(self.device_id, row, col, self.rgb.NONE)
+
+            while True:
+                button_states = self.keypad.get_button_states()
+                if last_button_states != button_states:
                     last_button_states = button_states
+                    #row, col = self.pico_interface.input_interface(self.device_id, button_id)
+                    #if col in [0,11]
+                    #    continue
+                    if button_states > 0:
+                        button = power_of_2(button_states)
+                        message = dict(d=self.device_id,
+                                       b=button)
+                        message_json = json.dumps(message).encode()
+                        self.client_socket.sendall(struct.pack('!I', len(message_json)))
+                        self.client_socket.sendall(message_json)
                     if button_states > 0:
                         button = power_of_2(button_states)
                         message = dict(d=self.device_id,
