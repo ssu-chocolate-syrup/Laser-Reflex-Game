@@ -83,7 +83,7 @@ class LaserGameServer:
                 client.sendall(send_data)
     
     #승리 이펙트 계산함수 (effect_type이 모든 피코파이의 button_num=0에 도달하면, 각 client에서 이펙트 실행)
-    def win_effect(pico,player):
+    def win_effect(player):
         send_data = []
         if (player == 1):
             effect_type ='' ##effect type 추가해주세요, player1
@@ -100,14 +100,14 @@ class LaserGameServer:
     def effect_to_clients(client_socket):
         check=self.game_instance.goal_check()
         if (check==1): ##p1이 승리
-            send_data = json.dumps(win_effect(i,1))
+            send_data = json.dumps(win_effect(1))
             send_to_pico(client_socket,send_data)
             time(1)
             #이펙트 출력 완료까지 대기
             time.sleep(1)
 
         elif (check==2): ##p2가 승리
-            send_data = json.dumps(win_effect(i,2))
+            send_data = json.dumps(win_effect(2))
             send_to_pico(client_socket,send_data)
             #이펙트 출력 완료까지 대기
             time.sleep(1)
