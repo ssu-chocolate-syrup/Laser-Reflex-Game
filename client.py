@@ -11,6 +11,7 @@ from config import Wifi
 from config import RGB
 from pico_interface import PicoInterface
 from pico_io import PicoIO
+from return_class import ReturnClass
 
 
 def power_of_2(number):
@@ -32,6 +33,15 @@ class Client:
         self.pico_io = PicoIO()
         self.pico_interface = PicoInterface()
         self.rgb = RGB()
+        self.color_mapping = {
+            'l': self.rgb.LASER,
+            '/': self.rgb.MIRROR_LEFT2UP,
+            '\\': self.rgb.MIRROR_LEFT2DOWN,
+            'tn': self.rgb.TIMER,
+            'tf': self.rgb.NONE,
+            'p1': self.rgb.PLAYER1,
+            'p2': self.rgb.PLAYER2
+        }
 
     def _wifi_conn(self):
         try:
@@ -81,18 +91,9 @@ class Client:
 
             # 불 켜기
             for item in data:
-                row, col = self.pico_interface.input_interface(item['d'], item['b'])
-                color_mapping = {
-                    'l': self.rgb.LASER,
-                    '/': self.rgb.MIRROR_LEFT2UP,
-                    '\\': self.rgb.MIRROR_LEFT2DOWN,
-                    'tn': self.rgb.TIMER,
-                    'tf': self.rgb.NONE,
-                    'p1': self.rgb.PLAYER1,
-                    'p2': self.rgb.PLAYER2
-                }
-                color = color_mapping.get(item['c'], None)
-                self.pico_io.run(self.device_id, row, col, color)
+                _color_type, _device_id, _button_id = item
+                row, col = self.pico_interface.input_interface(_device_id, _button_id)
+                self.pico_io.run(self.device_id, row, col, self.color_mapping.get(_color_type, None))
                 time.sleep(0.1)
 
     def start(self):
@@ -117,11 +118,11 @@ class Client:
                         row, col = self.pico_interface.input_interface(self.device_id, button)
                         if row in [0, 11]:
                             continue
-                        message = dict(d=self.device_id,
-                                       b=button)
-                        message_json = json.dumps(message).encode()
-                        self.client_socket.sendall(struct.pack('!I', len(message_json)))
-                        self.client_socket.sendall(message_json)
+                        send_data_json = ReturnClass(_color_type=None, _device_id=self.device_id,
+                                                     _button_id=button).get_convert_json()
+                        send_data_json_encode = send_data_json.encode()
+                        self.client_socket.sendall(struct.pack('!I', len(send_data_json_encode)))
+                        self.client_socket.sendall(send_data_json_encode)
 
 
 class ErrorException(Client):

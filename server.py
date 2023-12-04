@@ -133,7 +133,7 @@ class LaserGameServer:
                 if (row == 5 and col == 7) or (row == 6 and col == 7):
                     print('hi')
                     ##타이머 시작 부분, 주석처리 함
-                    ##self.start_timer_thread(5) 
+                    ##self.start_timer_thread(5)
                     if self.turn_end_button_cnt == 0:
                         self.dfs_to_clients(client_socket)
                         self.turn_end_button_cnt += 1
@@ -151,7 +151,7 @@ class LaserGameServer:
                                      dict(c=f'p{self.turn_end_button_cnt}', d=4, b=2)]
 
                         r,c=self.pico_interface.input_interface(send_data[-1]['d'],send_data[-1]['b']
-                        if(r==0 or r==11){ 
+                        if(r==0 or r==11){
                             ##NONE correct plz
                             send_data.append(dict(c='None',send_data[-1]['d'],send_data[-1]['b']))
                         }
@@ -163,7 +163,7 @@ class LaserGameServer:
 
                     self.send_to_pico(client_socket, send_data.encode())
                     ## 5,7입력들어오면 현재 실행중인 타이머 종료, 타이머 재시작
-                    ##self.check_and_restart_timer() 
+                    ##self.check_and_restart_timer()
 
                 else:
                     self.game_instance.input_mirror(row, col)
