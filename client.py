@@ -69,7 +69,7 @@ class Client:
             data = self.recv_all(client_socket, message_len).decode()
             return json.loads(data)
 
-    def processing(self, client_socket)
+    def processing(self, client_socket):
         while True:
             data = self.recv_data(client_socket)
             # 불 끄기
