@@ -78,7 +78,7 @@ class Client:
                     continue
                 row, col = self.pico_interface.input_interface(self.device_id, button)
                 self.pico_io.run(self.device_id, row, col, self.rgb.NONE)
-                time.sleep(0.03)
+
             # 불 켜기
             for item in data:
                 row, col = self.pico_interface.input_interface(item['d'], item['b'])
@@ -92,7 +92,6 @@ class Client:
                     'p2': self.rgb.PLAYER2
                 }
                 color = color_mapping.get(item['c'], None)
-                print("돼야해",color)
                 self.pico_io.run(self.device_id, row, col, color)
                 time.sleep(0.1)
 
