@@ -2,7 +2,7 @@ import json
 
 
 class ReturnClass:
-    def __init__(self, _color_type, _device_id, _button_id):
+    def __init__(self, _color_type=None, _device_id=None, _button_id=None):
         self.color_type = _color_type
         self.device_id = _device_id
         self.button_id = _button_id
@@ -12,7 +12,21 @@ class ReturnClass:
         yield self.device_id
         yield self.button_id
 
+    @staticmethod
+    def set_return_class(_color_type, _device_id, _button_id):
+        return ReturnClass(_color_type, _device_id, _button_id)
+
+    def get_convert_return_class(self, data):
+        _color_type = data.get('c', None)
+        _device_id = data.get('d', None)
+        _color_type = data.get('b', None)
+        if _color_type and _device_id and _color_type:
+            return self.set_return_class(_color_type, _device_id, _color_type)
+
+    def get_convert_dict(self):
+        return {'c': self.color_type,
+                'd': self.device_id,
+                'b': self.button_id}
+
     def get_convert_json(self):
-        return json.dumps({'c': self.color_type,
-                           'd': self.device_id,
-                           'b': self.button_id})
+        return json.dumps(self.get_convert_dict())
