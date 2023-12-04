@@ -21,6 +21,7 @@ class LaserGameServer:
         self.timer_stop_flag = False  # 타이머 중지 플래그 추가
         self.timer_completed = threading.Event()  # 타이머 완료 이벤트
         self.timer_reset_flag = threading.Event()  # 타이머 리셋 플래그 추가
+        self.start=True
 
     def recv_all(self, client_socket, byte_size):
         data = b''
@@ -134,24 +135,36 @@ class LaserGameServer:
                     print('hi')
                     ##타이머 시작 부분, 주석처리 함
                     ##self.start_timer_thread(5)
-                    if self.turn_end_button_cnt == 0:
+                    if start:
                         self.dfs_to_clients(client_socket)
                         self.turn_end_button_cnt += 1
-                    elif self.turn_end_button_cnt == 1:
-                        self.turn_end_button_cnt += 1
-                    elif self.turn_end_button_cnt == 2:
-                        self.turn_end_button_cnt -= 1
+                        self.send_to_pico(client_socket, send_data.encode())
+                        #if start illuminate all of goal post
+                        for i in range(self.game_instance.MAX_COL):
+                            de,bu=self.pico_interface.output_interface(0,i)
+                            send_data.append(dict(c='p1', 'd'=de, 'b'=bu))
+                            de,bu=self.pico_interface.output_interface(self.game_instance.MAX_ROW-1,i)
+                            send_data.append(dict(c='p1', 'd'=de, 'b'=bu))
+                        for item in self.game_instance.send_data:
+                            send_data.append(item)
+                        send_data=json.dumps(send_data)
+                        print(send_data)
+                        self.send_to_pico(client_socket, send_data.encode())
+                        self.start=False
+                        continue
+                    else :
+                        self.turn_end_button_cnt = self.turn_end_button_cnt % 2 + 1
                     goal_check = self.game_instance.goal_check()
                     if goal_check['result']:
                         self.turn_end_button_cnt = 0
                         send_data = json.dumps(self.win_effect(goal_check['player']))
                         self.game_instance.init()
-                    else:
+                    else: 
                         send_data = [dict(c=f'p{self.turn_end_button_cnt}', d=4, b=1),
                                      dict(c=f'p{self.turn_end_button_cnt}', d=4, b=2)]
-
-                        r,c=self.pico_interface.input_interface(send_data[-1]['d'],send_data[-1]['b']
-                        if(r==0 or r==11){
+                        ##shadow not goal post
+                        r,c=self.pico_interface.input_interface(send_data[-1]['d'],send_data[-1]['b'])
+                        if(r==0 or r==self.game_instance.MAX_COL):
                             ##NONE correct plz
                             send_data.append(dict(c='None',send_data[-1]['d'],send_data[-1]['b']))
                         }
@@ -164,6 +177,7 @@ class LaserGameServer:
                     self.send_to_pico(client_socket, send_data.encode())
                     ## 5,7입력들어오면 현재 실행중인 타이머 종료, 타이머 재시작
                     ##self.check_and_restart_timer()
+                    self.start=False
 
                 else:
                     self.game_instance.input_mirror(row, col)
