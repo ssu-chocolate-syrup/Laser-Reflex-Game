@@ -17,6 +17,11 @@ class LaserGameServer:
         self.client_sockets = []
         self.server_socket = None
         self.turn_end_button_cnt = 0
+        self.current_timer_thread = None
+        self.timer_stop_flag = False  # 타이머 중지 플래그 추가
+        self.timer_completed = threading.Event()  # 타이머 완료 이벤트
+        self.timer_reset_flag = threading.Event()  # 타이머 리셋 플래그 추가
+
 
     def recv_all(self, client_socket, byte_size):
         data = b''
@@ -35,85 +40,100 @@ class LaserGameServer:
             data = json.loads(data)
             return data
 
-    # def timer_thread_function(self, count):
-    #     time.sleep(3)
-    #     p1_pico_number_id, p1_pico_number_button = self.pico_interface.output_interface(12 - 1 - count, 8 - 1)
-    #     p2_pico_number_id, p2_pico_number_button = self.pico_interface.output_interface(count, 8 - 1)
-    #
-    #     send_data = [dict(c='tf', d=p1_pico_number_id, b=p1_pico_number_button),
-    #                  dict(c='tf', d=p2_pico_number_id, b=p2_pico_number_button)]
-    #     send_data_json = json.dumps(send_data).encode()
-    #     print(send_data_json)
-    #     for client in self.client_sockets:
-    #         client.sendall(struct.pack('!I', len(send_data_json)))
-    #         client.sendall(send_data_json)
-    #
-    # def timer_thread(self, is_init, count):
-    #     if not is_init:
-    #         send_data = []
-    #         for p2_row in range(11, 7 - 1, -1):
-    #             p1_row = p2_row - 7
-    #             p1_pico_number_id, p1_pico_number_button = self.pico_interface.output_interface(p1_row, 8 - 1)
-    #             p2_pico_number_id, p2_pico_number_button = self.pico_interface.output_interface(p2_row, 8 - 1)
-    #             send_data.append(dict(c='tn', d=p1_pico_number_id, b=p1_pico_number_button))
-    #             send_data.append(dict(c='tn', d=p2_pico_number_id, b=p2_pico_number_button))
-    #         send_data_json = json.dumps(send_data).encode()
-    #         print(send_data_json)
-    #         for client in self.client_sockets:
-    #             client.sendall(struct.pack('!I', len(send_data_json)))
-    #             client.sendall(send_data_json)
-    #         self.timer_thread_function(count)
-    #         threading.Thread(target=self.timer_thread, args=(1, count - 1)).start()
-    #     else:
-    #         if count > 0:
-    #             self.timer_thread_function(count)
-    #             threading.Thread(target=self.timer_thread, args=(1, count - 1)).start()
-    #         elif count == 0:
-    #             self.timer_thread_function(count)
-    #             threading.Thread(target=self.timer_thread, args=(0, count + 4)).start()
+    ##타이머 초 세주는 함수
+    def timer_thread_function(self, count):
+        initial_count = count  # 초기 count 값 저장
+        while True:
+            while count >= 0:
+                # 중지 신호가 있으면 타이머 스레드 종료
+                if self.timer_reset_flag.is_set():
+                    return 
+                send_data = []
+                ##타이머 줄어들때마다 타이머 종료 신호 뿌려줌
+                for player_row in [12 - 1 - count, count]:
+                    pico_number_id, pico_number_button = self.pico_interface.output_interface(player_row, 8 - 1)
+                    send_data.append([dict(c='tf', d=pico_number_id, b=pico_number_button)])
+                send_data_json = json.dumps(send_data).encode()
+                print(send_data_json)
+                for client in self.client_sockets:
+                    self.send_data_to_client(client, send_data_json)
+                time.sleep(1)
+                count -= 1
+            # 타이머 완료 플래그 설정
+            self.timer_completed.set()
+            #다시 처음부터 count
+            count = initial_count
+    ##타이머 제시작 함수
+    def check_and_restart_timer(self):
+        if self.timer_completed.is_set():
+            self.timer_completed.clear()  # 플래그 초기화
+            self.start_timer_thread(5)  # 타이머 재시작
+
+    ##타이머 시작 함수
+    def start_timer_thread(self, count):
+        # 현재 실행 중인 타이머 스레드가 있으면 중지 신호를 보내고 기다림
+        self.timer_reset_flag.set()  # 타이머 중지 신호
+        if self.current_timer_thread and self.current_timer_thread.is_alive():
+            self.current_timer_thread.join()  # 기존 타이머 종료 대기
+
+        self.timer_reset_flag.clear()  # 중지 신호 초기화
+        self.timer_completed.clear()  # 타이머 완료 플래그 초기화
+        
+        #타이머 LED 모든 피코패드에 뿌려줌
+        send_data = []
+        for p2_row in range(11, 7 - 1, -1):
+            p1_row = p2_row - 7
+            for player_row in [p1_row, p2_row]:
+                pico_number_id, pico_number_button = self.pico_interface.output_interface(player_row, 8 - 1)
+                send_data.extend([dict(c='tn', d=pico_number_id, b=pico_number_button)])
+        send_data_json = json.dumps(send_data).encode()
+        print(send_data_json)
+        for client in self.client_sockets:
+            self.send_data_to_client(client, send_data_json)
+        
+        ##타이머 count 시작
+        self.current_timer_thread = threading.Thread(target=self.timer_thread_function, args=(count,))
+        self.current_timer_thread.start()
 
     @staticmethod
     def send_data_to_client(client, data):
         client.sendall(struct.pack('!I', len(data)))
         client.sendall(data)
 
-    # 반복되는 전송 처리해주기위해 함수 처리
     def send_to_pico(self, client_socket, send_data):
         print(send_data)
-        ## 실제 전송
         self.send_data_to_client(client_socket, send_data)
         for client in self.client_sockets:
             if client != client_socket:
                 self.send_data_to_client(client, send_data)
 
-    # 승리 이펙트 계산함수 (effect_type이 모든 피코파이의 button_num=0에 도달하면, 각 client에서 이펙트 실행)
     def win_effect(self, player):
         return [dict(c='p1' if player == 1 else 'p2',
                      d=device_id,
                      b=15)
                 for device_id in range(1, 6 + 1)]
 
-    # dfs 전송 함수
     def dfs_to_clients(self, client_socket):
         send_data = json.dumps(self.game_instance.main()).encode()
         self.send_to_pico(client_socket, send_data)
 
     def threaded(self, client_socket, addr):
-        print('>> Connected by :', addr[0], ':', addr[1])
+        print('>> Connected by:', addr[0], ':', addr[1])
         while True:
             try:
                 button_input_data = self.recv_data(client_socket)
-                print('>> Received from ' + addr[0], ':', addr[1], button_input_data)
+                print(button_input_data)
+                print('>> Received from', addr[0], ':', addr[1], button_input_data)
                 row, col = self.pico_interface.input_interface(button_input_data['d'], button_input_data['b'])
-                # 턴 종료 버튼을 눌렀을 때
                 if (row == 5 and col == 7) or (row == 6 and col == 7):
+                    print('hi')
+                    ##타이머 시작 부분, 주석처리 함
+                    ##self.start_timer_thread(5) 
                     if self.turn_end_button_cnt == 0:
                         self.dfs_to_clients(client_socket)
                         self.turn_end_button_cnt += 1
-                    # Player1의 턴이 끝났을 때
                     elif self.turn_end_button_cnt == 1:
                         self.turn_end_button_cnt += 1
-                    # Player2의 턴이 끝났을 때
                     elif self.turn_end_button_cnt == 2:
                         self.turn_end_button_cnt -= 1
                     goal_check = self.game_instance.goal_check()
@@ -127,23 +147,30 @@ class LaserGameServer:
                                  d=button_input_data['d'],
                                  b=button_input_data['b'])
                         )
-                    self.send_to_pico(client_socket, send_data)
+                        print(send_data)
+
+
+                    self.send_to_pico(client_socket, send_data.encode())
+                    ## 5,7입력들어오면 현재 실행중인 타이머 종료, 타이머 재시작
+                    ##self.check_and_restart_timer() 
+
                 else:
                     self.game_instance.input_mirror(row, col)
+                    print(row, col)
                     self.dfs_to_clients(client_socket)
 
             except ConnectionResetError as e:
-                print('>> Disconnected by ' + addr[0], ':', addr[1])
+                print('>> Disconnected by', addr[0], ':', addr[1])
                 break
 
         if client_socket in self.client_sockets:
             self.client_sockets.remove(client_socket)
-            print('remove client list : ', len(self.client_sockets))
+            print('remove client list:', len(self.client_sockets))
 
         client_socket.close()
 
     def start_server(self):
-        print('>> Server Start with ip :', Server.HOST)
+        print('>> Server Start with ip:', Server.HOST)
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 1 << 13)
@@ -156,9 +183,9 @@ class LaserGameServer:
                 client_socket, addr = self.server_socket.accept()
                 self.client_sockets.append(client_socket)
                 start_new_thread(self.threaded, (client_socket, addr))
-                print("참가자 수 : ", len(self.client_sockets))
+                print("참가자 수:", len(self.client_sockets))
         except Exception as e:
-            print('에러 : ', e)
+            print('에러:', e)
         finally:
             self.server_socket.close()
 
