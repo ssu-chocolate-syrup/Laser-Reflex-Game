@@ -22,7 +22,6 @@ class LaserGameServer:
         self.timer_completed = threading.Event()  # 타이머 완료 이벤트
         self.timer_reset_flag = threading.Event()  # 타이머 리셋 플래그 추가
 
-
     def recv_all(self, client_socket, byte_size):
         data = b''
         while len(data) < byte_size:
@@ -35,6 +34,8 @@ class LaserGameServer:
     def recv_data(self, client_socket):
         while True:
             raw_message_len = self.recv_all(client_socket, 4)
+            if not raw_message_len:
+                return None
             message_len = struct.unpack('!I', raw_message_len)[0]
             data = self.recv_all(client_socket, message_len).decode()
             data = json.loads(data)
@@ -47,11 +48,12 @@ class LaserGameServer:
             while count >= 0:
                 # 중지 신호가 있으면 타이머 스레드 종료
                 if self.timer_reset_flag.is_set():
-                    return 
+                    return
                 send_data = []
                 ##타이머 줄어들때마다 타이머 종료 신호 뿌려줌
-                for player_row in [12 - 1 - count, count]:
-                    pico_number_id, pico_number_button = self.pico_interface.output_interface(player_row, 8 - 1)
+                for player_row in [self.game_instance.MAX_ROW - 1 - count, count]:
+                    pico_number_id, pico_number_button = self.pico_interface.output_interface(player_row,
+                                                                                              self.game_instance.MAX_COL)
                     send_data.append([dict(c='tf', d=pico_number_id, b=pico_number_button)])
                 send_data_json = json.dumps(send_data).encode()
                 print(send_data_json)
@@ -61,8 +63,9 @@ class LaserGameServer:
                 count -= 1
             # 타이머 완료 플래그 설정
             self.timer_completed.set()
-            #다시 처음부터 count
+            # 다시 처음부터 count
             count = initial_count
+
     ##타이머 제시작 함수
     def check_and_restart_timer(self):
         if self.timer_completed.is_set():
@@ -78,19 +81,19 @@ class LaserGameServer:
 
         self.timer_reset_flag.clear()  # 중지 신호 초기화
         self.timer_completed.clear()  # 타이머 완료 플래그 초기화
-        
-        #타이머 LED 모든 피코패드에 뿌려줌
+
+        # 타이머 LED 모든 피코패드에 뿌려줌
         send_data = []
-        for p2_row in range(11, 7 - 1, -1):
+        for p2_row in range(self.game_instance.MAX_ROW - 1, self.game_instance.MAX_COL - 1, -1):
             p1_row = p2_row - 7
             for player_row in [p1_row, p2_row]:
-                pico_number_id, pico_number_button = self.pico_interface.output_interface(player_row, 8 - 1)
+                pico_number_id, pico_number_button = self.pico_interface.output_interface(player_row, self.game_instance.MAX_COL)
                 send_data.extend([dict(c='tn', d=pico_number_id, b=pico_number_button)])
         send_data_json = json.dumps(send_data).encode()
         print(send_data_json)
         for client in self.client_sockets:
             self.send_data_to_client(client, send_data_json)
-        
+
         ##타이머 count 시작
         self.current_timer_thread = threading.Thread(target=self.timer_thread_function, args=(count,))
         self.current_timer_thread.start()
@@ -122,6 +125,8 @@ class LaserGameServer:
         while True:
             try:
                 button_input_data = self.recv_data(client_socket)
+                if not button_input_data:
+                    continue
                 print(button_input_data)
                 print('>> Received from', addr[0], ':', addr[1], button_input_data)
                 row, col = self.pico_interface.input_interface(button_input_data['d'], button_input_data['b'])
@@ -148,7 +153,6 @@ class LaserGameServer:
                                  b=button_input_data['b'])
                         )
                         print(send_data)
-
 
                     self.send_to_pico(client_socket, send_data.encode())
                     ## 5,7입력들어오면 현재 실행중인 타이머 종료, 타이머 재시작
