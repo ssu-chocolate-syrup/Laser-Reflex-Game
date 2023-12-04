@@ -1,10 +1,5 @@
-"""
-Test Title: Click Pico Button -> Turn On LED
-"""
-
 import picokeypad
 
-from config import RGB
 from pico_interface import PicoInterface
 from pico_io import PicoIO
 
@@ -16,7 +11,6 @@ class PicoButtonTest:
         self.keypad.set_brightness(0)
         self.pico_io = PicoIO()
         self.pico_interface = PicoInterface()
-        self.rgb = RGB()
         self.last_button_states = 0
 
     @staticmethod
@@ -28,7 +22,6 @@ class PicoButtonTest:
         return count - 1
 
     def run(self):
-        print("< Test Start >")
         while True:
             button_states = self.keypad.get_button_states()
             if self.last_button_states != button_states:
@@ -37,9 +30,4 @@ class PicoButtonTest:
                     button = self._power_of_2(button_states)
                     row, col = self.pico_interface.input_interface(self.device_id, button)
                     print(f"buttonID: {button} | row: {row} | col: {col}")
-                    self.pico_io.run(self.device_id, row, col, self.rgb.BLUE)
-
-
-if __name__ == '__main__':
-    test = PicoButtonTest(device_id=1)
-    test.run()
+                    self.pico_io.run(self.device_id, row, col, [0, 0, 255])
