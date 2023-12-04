@@ -153,9 +153,12 @@ class LaserGameServer:
                         row = self.game_instance.send_data[-1]['row']
                         col = self.game_instance.send_data[-1]['col']
                         d_id, b_id = self.pico_interface.output_interface(row, col)
-                        self.game_instance.send_data[-1] = ReturnClass(_color_type='tf',
-                                                                       _device_id=d_id,
-                                                                       _button_id=b_id).get_convert_dict()
+                        if row ==0 or row==self.game_instance.MAX_ROW - 1:
+                            self.game_instance.send_data[-1] = ReturnClass(_color_type='tf',
+                                                                           _device_id=d_id,
+                                                                           _button_id=b_id).get_convert_dict()
+                        else :
+                            self.game_instance.send_data.pop()
                         for send_data in self.game_instance.send_data:
                             real_send.append(send_data)
                     self.send_to_pico(client_socket, json.dumps(self.game_instance.send_data).encode())
