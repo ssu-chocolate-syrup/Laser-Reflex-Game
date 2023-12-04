@@ -118,7 +118,8 @@ class Client:
                         row, col = self.pico_interface.input_interface(self.device_id, button)
                         if row in [0, 11]:
                             continue
-                        send_data_json = ReturnClass(_color_type=None, _device_id=self.device_id,
+                        send_data_json = ReturnClass(_color_type=None,
+                                                     _device_id=self.device_id,
                                                      _button_id=button).get_convert_json()
                         send_data_json_encode = send_data_json.encode()
                         self.client_socket.sendall(struct.pack('!I', len(send_data_json_encode)))
@@ -134,7 +135,7 @@ class ErrorException(Client):
     def error(self):
         print(self.msg)
         row, col = self.pico_interface.input_interface(self.device_id, self.button_id)
-        self.pico_io.run(self.device_id, row, col, [255, 0, 0])
+        self.pico_io.run(self.device_id, row, col, self.rgb.RED)
 
 
 def main():

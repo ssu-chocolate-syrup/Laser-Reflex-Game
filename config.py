@@ -1,5 +1,5 @@
 class Server:
-    HOST = '192.168.207.168'
+    HOST = '192.168.101.199'
     PORT = 9999
 
 
@@ -9,6 +9,9 @@ class Wifi:
 
 
 class RGB:
+    RED = (255, 0, 0)
+    GREEN = (0, 255, 0)
+    BLUE = (0, 0, 255)
     PLAYER1 = (33, 118, 255)
     PLAYER2 = (140, 15, 83)
     NONE = (0, 0, 0)

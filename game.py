@@ -4,6 +4,7 @@ from typing import List, Tuple, Union
 
 from pico_interface import PicoInterface
 from config import RGB
+from return_class import ReturnClass
 
 
 class Item:
@@ -71,11 +72,13 @@ class LaserGame:
             direction = self.mirror_direction(row, col, direction)
         else:
             device_id, button_id = self.pico_interface.output_interface(row, col)
-            self.send_data.append(dict(
-                c='l',
-                d=device_id,
-                b=button_id
-            ))
+            self.send_data.append(
+                ReturnClass(
+                    _color_type='/',
+                    _device_id=device_id,
+                    _button_id=button_id
+                ).get_convert_dict()
+            )
 
         if direction == self.Direction.LEFT:
             return self.dfs(row, col - 1, direction)
@@ -113,7 +116,8 @@ class LaserGame:
             self.mirror[row][col] = 0
 
     def goal_check(self):
-        row_col = self.pico_interface.output_interface(self.send_data[-1]['d'], self.send_data[-1]['b'])
+        _device_id, _button_id = self.send_data[-1]
+        row_col = self.pico_interface.output_interface(_device_id, _button_id)
         return self.goal_in(row_col)
 
     def main(self):
@@ -121,23 +125,13 @@ class LaserGame:
         for row in range(self.MAX_ROW):
             for col in range(self.MAX_COL):
                 if self.mirror[row][col]:
-                    mirror_type = '/' if self.mirror[row][col] == self.Item.MIRROR_LEFT2UP else '\\'
-                    device_id, button_id = self.pico_interface.output_interface(row, col)                    
-                    data_entry = {'c': mirror_type, 'd': device_id, 'b': button_id}
-                    self.send_data.append(data_entry)
+                    device_id, button_id = self.pico_interface.output_interface(row, col)
+                    self.send_data.append(
+                        ReturnClass(
+                            _color_type='/' if self.mirror[row][col] == self.Item.MIRROR_LEFT2UP else '\\',
+                            _device_id=device_id,
+                            _button_id=button_id
+                        ).get_convert_dict()
+                    )
         self.dfs(0, self.MAX_COL // 2, self.Direction.DOWN)
         return self.send_data
-
-
-if __name__ == "__main__":
-    laser_game = LaserGame()
-    pprint(laser_game.main())
-    print('-' * 20)
-
-    laser_game.input_mirror(1, 3)
-    pprint(laser_game.main())
-    print('-' * 20)
-
-    laser_game.input_mirror(1, 0)
-    pprint(laser_game.main())
-    print('-' * 20)
