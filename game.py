@@ -62,11 +62,41 @@ class LaserGame:
             return directional_response[direction]
 
     def dfs(self, row: int, col: int, direction: int) -> Tuple[int, int]:
-        if row <= -1 or row >= self.MAX_ROW:
-            return (row + 1, col) if row == -1 else (row - 1, col)
-        if col <= -1 or col >= self.MAX_COL:
+        print('test:', row, col)
+        if row < 0 or row >= self.MAX_ROW:
+            if row < 0:
+                goalin_result = self.goal_in((row + 1, col))
+                self.send_data.append({
+                    'player': goalin_result['player'],
+                    'result': goalin_result['result'],
+                    'row': row + 1,
+                    'col': col
+                })
+            if row >= self.MAX_ROW:
+                goalin_result = self.goal_in((row - 1, col))
+                self.send_data.append({
+                    'player': goalin_result['player'],
+                    'result': goalin_result['result'],
+                    'row': row - 1,
+                    'col': col
+                })
             return -1, -1
-
+        if col < 0 or col >= self.MAX_COL:
+            if col < 0:
+                self.send_data.append({
+                    'player': -1,
+                    'result': False,
+                    'row': row,
+                    'col': col + 1
+                })
+            if col >= self.MAX_COL:
+                self.send_data.append({
+                    'player': -1,
+                    'result': False,
+                    'row': row,
+                    'col': col - 1
+                })
+            return -1, -1
         self.laser[row][col] = 1
         if self.mirror[row][col]:
             direction = self.mirror_direction(row, col, direction)
@@ -74,7 +104,7 @@ class LaserGame:
             device_id, button_id = self.pico_interface.output_interface(row, col)
             self.send_data.append(
                 ReturnClass(
-                    _color_type='/',
+                    _color_type='l',
                     _device_id=device_id,
                     _button_id=button_id
                 ).get_convert_dict()
@@ -101,9 +131,10 @@ class LaserGame:
         row, col = coordinate
         if row == 0 and col != self.get_goalpost_x(self.p1_goalpost):
             self.p1_goalpost[col] = 0
+            return dict(result=False, player=-1)
         if row == self.MAX_ROW - 1 and col != self.get_goalpost_x(self.p2_goalpost):
             self.p2_goalpost[col] = 0
-
+            return dict(result=False, player=-1)
         if row == 0 and col == self.get_goalpost_x(self.p1_goalpost):
             return dict(result=True, player=2)
         if row == self.MAX_ROW - 1 and col == self.get_goalpost_x(self.p2_goalpost):
@@ -121,7 +152,30 @@ class LaserGame:
         return self.goal_in(row_col)
 
     def main(self):
-        self.send_data = []
+
+        ##2. 골대 켜진놈들, 현상태 = [턴종료, 골대 꺼진놈들]
+        for i in range(7):
+            if self.p1_goalpost[i] == 1 or self.p1_goalpost[i] == -1:
+                device_id, button_id = self.pico_interface.output_interface(0, i)
+                self.send_data.append(
+                    ReturnClass(
+                        _color_type='p1',
+                        _device_id=device_id,
+                        _button_id=button_id
+                    ).get_convert_dict()
+                )
+        for i in range(7):
+            if self.p2_goalpost[i] == 1 or self.p2_goalpost[i] == -1:
+                device_id, button_id = self.pico_interface.output_interface(self.MAX_ROW - 1, i)
+                self.send_data.append(
+                    ReturnClass(
+                        _color_type='p2',
+                        _device_id=device_id,
+                        _button_id=button_id
+                    ).get_convert_dict()
+                )
+        ##3. 거울, 현상태 = [턴종료, 골대 꺼진놈들,거울]
+
         for row in range(self.MAX_ROW):
             for col in range(self.MAX_COL):
                 if self.mirror[row][col]:
@@ -131,7 +185,9 @@ class LaserGame:
                             _color_type='/' if self.mirror[row][col] == self.Item.MIRROR_LEFT2UP else '\\',
                             _device_id=device_id,
                             _button_id=button_id
-                        ).get_convert_dict()
-                    )
-        self.dfs(0, self.MAX_COL // 2, self.Direction.DOWN)
+                        ).get_convert_dict())
+
+        ##3. 경로1,경로2,...,직전에 꺼진놈, 경로마지막 = [턴종료, 골대 꺼진놈들,거울,경로,꺼진놈,경로]
+
+        self.dfs(0, 3, self.Direction.DOWN)
         return self.send_data

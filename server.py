@@ -8,6 +8,7 @@ from _thread import *
 from game import LaserGame
 from config import Server
 from pico_interface import PicoInterface
+from return_class import ReturnClass
 
 
 class LaserGameServer:
@@ -21,9 +22,10 @@ class LaserGameServer:
         self.timer_stop_flag = False  # 타이머 중지 플래그 추가
         self.timer_completed = threading.Event()  # 타이머 완료 이벤트
         self.timer_reset_flag = threading.Event()  # 타이머 리셋 플래그 추가
-        self.start=True
+        self.start = True
 
-    def recv_all(self, client_socket, byte_size):
+    @staticmethod
+    def recv_all(client_socket, byte_size):
         data = b''
         while len(data) < byte_size:
             packet = client_socket.recv(byte_size - len(data))
@@ -39,8 +41,7 @@ class LaserGameServer:
                 return None
             message_len = struct.unpack('!I', raw_message_len)[0]
             data = self.recv_all(client_socket, message_len).decode()
-            data = json.loads(data)
-            return data
+            return json.loads(data)
 
     ##타이머 초 세주는 함수
     def timer_thread_function(self, count):
@@ -88,7 +89,8 @@ class LaserGameServer:
         for p2_row in range(self.game_instance.MAX_ROW - 1, self.game_instance.MAX_COL - 1, -1):
             p1_row = p2_row - 7
             for player_row in [p1_row, p2_row]:
-                pico_number_id, pico_number_button = self.pico_interface.output_interface(player_row, self.game_instance.MAX_COL)
+                pico_number_id, pico_number_button = self.pico_interface.output_interface(player_row,
+                                                                                          self.game_instance.MAX_COL)
                 send_data.extend([dict(c='tn', d=pico_number_id, b=pico_number_button)])
         send_data_json = json.dumps(send_data).encode()
         print(send_data_json)
@@ -112,14 +114,14 @@ class LaserGameServer:
                 self.send_data_to_client(client, send_data)
 
     def win_effect(self, player):
-        return [dict(c='p1' if player == 1 else 'p2',
-                     d=device_id,
-                     b=15)
+        return [ReturnClass(_color_type='p1' if player == 1 else 'p2',
+                            _device_id=device_id,
+                            _button_id=15).get_convert_dict()
                 for device_id in range(1, 6 + 1)]
 
     def dfs_to_clients(self, client_socket):
-        send_data = json.dumps(self.game_instance.main()).encode()
-        self.send_to_pico(client_socket, send_data)
+        self.game_instance.main()
+        self.send_to_pico(client_socket, json.dumps(self.game_instance.send_data).encode())
 
     def threaded(self, client_socket, addr):
         print('>> Connected by:', addr[0], ':', addr[1])
@@ -128,60 +130,41 @@ class LaserGameServer:
                 button_input_data = self.recv_data(client_socket)
                 if not button_input_data:
                     continue
-                print(button_input_data)
                 print('>> Received from', addr[0], ':', addr[1], button_input_data)
-                row, col = self.pico_interface.input_interface(button_input_data['d'], button_input_data['b'])
+                _, received_device_id, received_button_id = ReturnClass().get_convert_return_class(button_input_data)
+                row, col = self.pico_interface.input_interface(received_device_id, received_button_id)
                 if (row == 5 and col == 7) or (row == 6 and col == 7):
-                    print('hi')
                     ##타이머 시작 부분, 주석처리 함
                     ##self.start_timer_thread(5)
-                    if self.start:
-                        self.dfs_to_clients(client_socket)
-                        self.turn_end_button_cnt += 1
-                        self.send_to_pico(client_socket, send_data.encode())
-                        #if start illuminate all of goal post
-                        for i in range(self.game_instance.MAX_COL):
-                            de,bu=self.pico_interface.output_interface(0,i)
-                            send_data.append(dict(c='p1', d=de, b=bu))
-                            de,bu=self.pico_interface.output_interface(self.game_instance.MAX_ROW-1,i)
-                            send_data.append(dict(c='p1', d=de, b=bu))
-                        for item in self.game_instance.send_data:
-                            send_data.append(item)
-                        send_data=json.dumps(send_data)
-                        print(send_data)
-                        self.send_to_pico(client_socket, send_data.encode())
-                        self.start=False
-                        continue
-                    else :
-                        self.turn_end_button_cnt = self.turn_end_button_cnt % 2 + 1
-                    goal_check = self.game_instance.goal_check()
-                    if goal_check['result']:
+                    self.turn_end_button_cnt = self.turn_end_button_cnt % 2 + 1
+                    if self.game_instance.send_data[-1]['result']:
                         self.turn_end_button_cnt = 0
-                        send_data = json.dumps(self.win_effect(goal_check['player']))
+                        self.game_instance.send_data = self.win_effect(self.game_instance.send_data[-1]['player'])
                         self.game_instance.init()
-                    else: 
-                        send_data = [dict(c=f'p{self.turn_end_button_cnt}', d=4, b=1),
-                                     dict(c=f'p{self.turn_end_button_cnt}', d=4, b=2)]
-                        ##shadow not goal post
-                        r,c=self.pico_interface.input_interface(send_data[-1]['d'],send_data[-1]['b'])
-                        if(r==0 or r==self.game_instance.MAX_COL):
-                            ##NONE correct plz
-                            send_data.append(dict(c='None',d=send_data[-1]['d'],b=send_data[-1]['b']))
-                    
+                    else:
+                        real_send = [
+                            ReturnClass(_color_type=f'p{self.turn_end_button_cnt}',
+                                        _device_id=4,
+                                        _button_id=1).get_convert_dict(),
+                            ReturnClass(_color_type=f'p{self.turn_end_button_cnt}',
+                                        _device_id=4,
+                                        _button_id=2).get_convert_dict()
+                        ]
+                        row = self.game_instance.send_data[-1]['row']
+                        col = self.game_instance.send_data[-1]['col']
+                        d_id, b_id = self.pico_interface.output_interface(row, col)
+                        self.game_instance.send_data[-1] = ReturnClass(_color_type='tf',
+                                                                       _device_id=d_id,
+                                                                       _button_id=b_id).get_convert_dict()
+                        for send_data in self.game_instance.send_data:
+                            real_send.append(send_data)
+                    self.send_to_pico(client_socket, json.dumps(self.game_instance.send_data).encode())
+                    self.game_instance.send_data = []
 
-                        for item in self.game_instance.send_data:
-                            send_data.append(item)
-                        send_data=json.dumps(send_data)
-                        print(send_data)
-
-                    self.send_to_pico(client_socket, send_data.encode())
                     ## 5,7입력들어오면 현재 실행중인 타이머 종료, 타이머 재시작
                     ##self.check_and_restart_timer()
-                    self.start=False
-
                 else:
                     self.game_instance.input_mirror(row, col)
-                    print(row, col)
                     self.dfs_to_clients(client_socket)
 
             except ConnectionResetError as e:
