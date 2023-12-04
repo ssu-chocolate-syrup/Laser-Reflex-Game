@@ -135,16 +135,16 @@ class LaserGameServer:
                     print('hi')
                     ##타이머 시작 부분, 주석처리 함
                     ##self.start_timer_thread(5)
-                    if start:
+                    if self.start:
                         self.dfs_to_clients(client_socket)
                         self.turn_end_button_cnt += 1
                         self.send_to_pico(client_socket, send_data.encode())
                         #if start illuminate all of goal post
                         for i in range(self.game_instance.MAX_COL):
                             de,bu=self.pico_interface.output_interface(0,i)
-                            send_data.append(dict(c='p1', 'd'=de, 'b'=bu))
+                            send_data.append(dict(c='p1', d=de, b=bu))
                             de,bu=self.pico_interface.output_interface(self.game_instance.MAX_ROW-1,i)
-                            send_data.append(dict(c='p1', 'd'=de, 'b'=bu))
+                            send_data.append(dict(c='p1', d=de, b=bu))
                         for item in self.game_instance.send_data:
                             send_data.append(item)
                         send_data=json.dumps(send_data)
@@ -166,8 +166,8 @@ class LaserGameServer:
                         r,c=self.pico_interface.input_interface(send_data[-1]['d'],send_data[-1]['b'])
                         if(r==0 or r==self.game_instance.MAX_COL):
                             ##NONE correct plz
-                            send_data.append(dict(c='None',send_data[-1]['d'],send_data[-1]['b']))
-                        }
+                            send_data.append(dict(c='None',d=send_data[-1]['d'],b=send_data[-1]['b']))
+                    
 
                         for item in self.game_instance.send_data:
                             send_data.append(item)
