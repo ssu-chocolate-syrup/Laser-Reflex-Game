@@ -54,7 +54,7 @@ class LaserGameServer:
                 for player_row in [self.game_instance.MAX_ROW - 1 - count, count]:
                     pico_number_id, pico_number_button = self.pico_interface.output_interface(player_row,
                                                                                               self.game_instance.MAX_COL)
-                    send_data.append([dict(c='tf', d=pico_number_id, b=pico_number_button)])
+                    send_data.append(dict(c='tf', d=pico_number_id, b=pico_number_button))
                 send_data_json = json.dumps(send_data).encode()
                 print(send_data_json)
                 for client in self.client_sockets:
@@ -87,8 +87,7 @@ class LaserGameServer:
         for p2_row in range(self.game_instance.MAX_ROW - 1, self.game_instance.MAX_COL - 1, -1):
             p1_row = p2_row - 7
             for player_row in [p1_row, p2_row]:
-                pico_number_id, pico_number_button = self.pico_interface.output_interface(player_row,
-                                                                                          self.game_instance.MAX_COL)
+                pico_number_id, pico_number_button = self.pico_interface.output_interface(player_row, self.game_instance.MAX_COL)
                 send_data.extend([dict(c='tn', d=pico_number_id, b=pico_number_button)])
         send_data_json = json.dumps(send_data).encode()
         print(send_data_json)
@@ -118,8 +117,7 @@ class LaserGameServer:
                 for device_id in range(1, 6 + 1)]
 
     def dfs_to_clients(self, client_socket):
-        self.game_instance.main()
-        send_data = json.dumps(self.game_instance.send_data).encode()
+        send_data = json.dumps(self.game_instance.main()).encode()
         self.send_to_pico(client_socket, send_data)
 
     def threaded(self, client_socket, addr):
@@ -149,12 +147,18 @@ class LaserGameServer:
                         send_data = json.dumps(self.win_effect(goal_check['player']))
                         self.game_instance.init()
                     else:
-                        send_data = [dict(c=f'p{self.turn_end_button_cnt}',
-                                          d=button_input_data['d'],
-                                          b=button_input_data['b'])]
+                        send_data = [dict(c=f'p{self.turn_end_button_cnt}', d=4, b=1),
+                                     dict(c=f'p{self.turn_end_button_cnt}', d=4, b=2)]
+
+                        r,c=self.pico_interface.input_interface(send_data[-1]['d'],send_data[-1]['b']
+                        if(r==0 or r==11){ 
+                            ##NONE correct plz
+                            send_data.append(dict(c='None',send_data[-1]['d'],send_data[-1]['b']))
+                        }
+
                         for item in self.game_instance.send_data:
                             send_data.append(item)
-                        send_data = json.dumps(send_data).encode()
+                        send_data=json.dumps(send_data)
                         print(send_data)
 
                     self.send_to_pico(client_socket, send_data.encode())
