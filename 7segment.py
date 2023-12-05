@@ -31,8 +31,8 @@ try:
     GPIO.setup(list(p2_pins.values()),GPIO.OUT)
     GPIO.output(list(p2_pins.values()),GPIO.LOW)
     
-    p1_segment(5) ## 괄호에 넣는 번호를 p1 세그먼트에 출력
-    p2_segment(5) ## 괄호에 넣는 번호를 p2 세그먼트에 출력
+    p1_segment(3) ## 괄호에 넣는 번호를 p1 세그먼트에 출력
+    p2_segment(7) ## 괄호에 넣는 번호를 p2 세그먼트에 출력
 
 except KeyboardInterrupt:
     print("fail:(")
