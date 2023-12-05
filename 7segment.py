@@ -19,7 +19,6 @@ GPIO.setwarnings(False)
 try:
     GPIO.setup(list(p1_pins.values()),GPIO.OUT)
     GPIO.output(list(p1_pins.values()),GPIO.LOW)
-  
     p1_segment(5)
 
 except KeyboardInterrupt:
