@@ -22,6 +22,7 @@ class ReturnClass:
         _color_type = data.get('b', None)
         if _color_type and _device_id and _color_type:
             return self.set_return_class(_color_type, _device_id, _color_type)
+        return data
 
     def get_convert_dict(self):
         return {'c': self.color_type,

@@ -77,7 +77,8 @@ class Client:
             raw_message_len = self.recv_all(client_socket, 4)
             message_len = struct.unpack('!I', raw_message_len)[0]
             data = self.recv_all(client_socket, message_len).decode()
-            return json.loads(data)
+            data = [ReturnClass().get_convert_return_class(item) for item in json.loads(data)]
+            return data
 
     def processing(self, client_socket):
         while True:

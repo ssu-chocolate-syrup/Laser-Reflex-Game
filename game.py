@@ -155,7 +155,7 @@ class LaserGame:
 
         ##2. 골대 켜진놈들, 현상태 = [턴종료, 골대 꺼진놈들]
         for i in range(7):
-            if self.p1_goalpost[i] == 1 or self.p1_goalpost[i] == -1:
+            if self.p1_goalpost[i]:
                 device_id, button_id = self.pico_interface.output_interface(0, i)
                 self.send_data.append(
                     ReturnClass(
@@ -165,7 +165,7 @@ class LaserGame:
                     ).get_convert_dict()
                 )
         for i in range(7):
-            if self.p2_goalpost[i] == 1 or self.p2_goalpost[i] == -1:
+            if self.p2_goalpost[i]:
                 device_id, button_id = self.pico_interface.output_interface(self.MAX_ROW - 1, i)
                 self.send_data.append(
                     ReturnClass(
