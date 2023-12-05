@@ -135,8 +135,7 @@ class LaserGameServer:
                 if not button_input_data:
                     continue
                 print('>> Received from', addr[0], ':', addr[1], button_input_data)
-                _, received_device_id, received_button_id = self.return_class_utils.get_convert_return_class(
-                    button_input_data)
+                _, received_device_id, received_button_id = self.return_class_utils.get_convert_return_class(button_input_data)
                 row, col = self.pico_interface.input_interface(received_device_id, received_button_id)
                 if (row == 5 and col == 7) or (row == 6 and col == 7):
                     ##타이머 시작 부분, 주석처리 함

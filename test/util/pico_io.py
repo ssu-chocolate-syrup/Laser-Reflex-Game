@@ -1,5 +1,5 @@
 import picokeypad
-from pico_interface import PicoInterface
+from util.pico_interface import PicoInterface
 
 keypad = picokeypad.PicoKeypad()
 keypad.set_brightness(1.0)
