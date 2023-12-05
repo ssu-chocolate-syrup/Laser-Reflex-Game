@@ -12,6 +12,7 @@ from util.config import RGB
 from util.pico_interface import PicoInterface
 from util.pico_io import PicoIO
 from util.return_class import ReturnClass
+from util.return_class import ReturnClassUtils
 
 
 def power_of_2(number):
@@ -33,6 +34,7 @@ class Client:
         self.pico_io = PicoIO()
         self.pico_interface = PicoInterface()
         self.rgb = RGB()
+        self.return_class_utils = ReturnClassUtils()
         self.color_mapping = {
             'l': self.rgb.LASER,
             '/': self.rgb.MIRROR_LEFT2UP,
@@ -48,6 +50,7 @@ class Client:
             self.wifi.connect(Wifi.SSID, Wifi.PW)
             while not self.wifi.isconnected():
                 pass
+            print('WIFI is Connected')
             return True
         except:
             ErrorException('WIFI Connection Failed', self.device_id, 0).error()
@@ -58,6 +61,7 @@ class Client:
             self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             try:
                 self.client_socket.connect((Server.HOST, Server.PORT))
+                print('Socket is Connected')
                 return True
             except:
                 ErrorException('Socket Connection Failed', self.device_id, 1).error()
@@ -77,7 +81,7 @@ class Client:
             raw_message_len = self.recv_all(client_socket, 4)
             message_len = struct.unpack('!I', raw_message_len)[0]
             data = self.recv_all(client_socket, message_len).decode()
-            data = [ReturnClass().get_convert_return_class(item) for item in json.loads(data)]
+            data = [self.return_class_utils.get_convert_return_class(item) for item in json.loads(data)]
             return data
 
     def processing(self, client_socket):
@@ -98,33 +102,34 @@ class Client:
                 time.sleep(0.1)
 
     def start(self):
-        if self._socket_conn():
-            start_new_thread(self.processing, (self.client_socket,))
-            last_button_states = 0
-            print("Client Start")
-            for button_id in range(16):
-                row, col = self.pico_interface.input_interface(self.device_id, button_id)
-                self.pico_io.run(self.device_id, row, col, self.rgb.LASER)
-                time.sleep(0.1)
-            for button_id in range(16):
-                row, col = self.pico_interface.input_interface(self.device_id, button_id)
-                self.pico_io.run(self.device_id, row, col, self.rgb.NONE)
+        if not self._socket_conn():
+            return
+        
+        start_new_thread(self.processing, (self.client_socket,))
+        last_button_states = 0
+        print("Client Start")
+        for button_id in range(16):
+            row, col = self.pico_interface.input_interface(self.device_id, button_id)
+            self.pico_io.run(self.device_id, row, col, self.rgb.LASER)
+            time.sleep(0.1)
+        for button_id in range(16):
+            row, col = self.pico_interface.input_interface(self.device_id, button_id)
+            self.pico_io.run(self.device_id, row, col, self.rgb.NONE)
 
-            while True:
-                button_states = self.keypad.get_button_states()
-                if last_button_states != button_states:
-                    last_button_states = button_states
-                    if button_states > 0:
-                        button = power_of_2(button_states)
-                        row, col = self.pico_interface.input_interface(self.device_id, button)
-                        if row in [0, 11]:
-                            continue
-                        send_data_json = ReturnClass(_color_type=None,
-                                                     _device_id=self.device_id,
-                                                     _button_id=button).get_convert_json()
-                        send_data_json_encode = send_data_json.encode()
-                        self.client_socket.sendall(struct.pack('!I', len(send_data_json_encode)))
-                        self.client_socket.sendall(send_data_json_encode)
+        while True:
+            button_states = self.keypad.get_button_states()
+            if last_button_states != button_states:
+                last_button_states = button_states
+                if button_states > 0:
+                    button = power_of_2(button_states)
+                    row, col = self.pico_interface.input_interface(self.device_id, button)
+                    if row in [0, 11]:
+                        continue
+                    send_data = ReturnClass(_color_type=None, _device_id=self.device_id, _button_id=button)
+                    send_data_json = self.return_class_utils.get_convert_json(send_data)
+                    send_data_json_encode = send_data_json.encode()
+                    self.client_socket.sendall(struct.pack('!I', len(send_data_json_encode)))
+                    self.client_socket.sendall(send_data_json_encode)
 
 
 class ErrorException(Client):
