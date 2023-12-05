@@ -3,8 +3,8 @@ import RPi.GPIO as GPIO
 
 GPIO.setmode(GPIO.BCM)
 
-digitBitmap = {0: 0b00111111, 1: 0b00000110, 2: 0b01011011, 3: 0b01001111, 4: 0b01100110, 5: 0b01101101, 6: 0b01111101, 7: 0b00000111, 8: 0b01111111, 9: 0b01100111 }
-masks = {'a': 0b00000001, 'b': 0b00000010, 'c': 0b00000100, 'd': 0b00001000, 'e': 0b00010000, 'f': 0b00100000, 'g': 0b01000000 }
+digitBitmap = {1: 0b00000110,2:0b01011011,3:0b01001111,5:0b01101101,6: 0b01111101,7:0b00000111}
+masks = {'a':0b00000001,'b':0b00000010,'c':0b00000100, 'd':0b00001000,'e':0b00010000, 'f':0b00100000,'g':0b01000000}
 p1_pins = {'a':17,'b':27,'c':22,'d':10,'e': 9,'f': 11,'g':0}
 p2_pins = {'a':23,'b':24,'c':25,'d':8,'e':7,'f':1,'g':12}
 
@@ -24,19 +24,14 @@ def p2_segment(c):
 
 GPIO.setwarnings(False)
 
-try:
-    GPIO.setup(list(p1_pins.values()),GPIO.OUT)
-    GPIO.output(list(p1_pins.values()),GPIO.LOW)
+GPIO.setup(list(p1_pins.values()),GPIO.OUT)
+GPIO.output(list(p1_pins.values()),GPIO.LOW)
 
-    GPIO.setup(list(p2_pins.values()),GPIO.OUT)
-    GPIO.output(list(p2_pins.values()),GPIO.LOW)
-    
-    p1_segment(3) ## 괄호에 넣는 번호를 p1 세그먼트에 출력
-    p2_segment(7) ## 괄호에 넣는 번호를 p2 세그먼트에 출력
+GPIO.setup(list(p2_pins.values()), GPIO.OUT)
+GPIO.output(list(p2_pins.values()), GPIO.LOW)
 
-except KeyboardInterrupt:
-    print("fail:(")
+p1_segment(3)
+p2_segment(5)
 
-finally:
-    time.sleep(10)
-    GPIO.cleanup()
+time.sleep(10)
+GPIO.cleanup()
