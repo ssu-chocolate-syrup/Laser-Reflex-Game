@@ -21,18 +21,11 @@ def p2_segment(c):
     for k,v in masks.items():
         if val&v==v:
             GPIO.output(p2_pins[k], GPIO.HIGH)
+GPIO.setwarnings(False)
+GPIO.setup(list(p1_pins.values()),GPIO.OUT)
+GPIO.output(list(p1_pins.values()),GPIO.LOW)
 
+p1_segment(1)
+time.sleep(10)
 
-def num_out():
-    try:
-        GPIO.setup(list(pins.values()), GPIO.OUT)
-        GPIO.output(list(pins.values()), GPIO.LOW)
-        val = 0
-        renderChar(p1_goalpost+1)
-        renderChar(p2_goalpost+1)
-    except KeyboardInterrupt:
-        continue
-    finally:
-        GPIO.cleanup()
-
-num_out()
+GPIO.cleanup()
