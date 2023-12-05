@@ -1,6 +1,4 @@
-import json
-
-from return_class import ReturnClass
+from util.return_class import ReturnClass
 
 
 class ReturnClassTest:

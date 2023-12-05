@@ -1,10 +1,9 @@
 import random
-from pprint import pprint
-from typing import List, Tuple, Union
+from typing import List, Tuple
 
-from pico_interface import PicoInterface
+from util.pico_interface import PicoInterface
 from config import RGB
-from return_class import ReturnClass
+from util.return_class import ReturnClass
 
 
 class Item:

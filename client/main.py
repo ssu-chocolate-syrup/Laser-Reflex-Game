@@ -9,9 +9,9 @@ import picokeypad
 from config import Server
 from config import Wifi
 from config import RGB
-from pico_interface import PicoInterface
-from pico_io import PicoIO
-from return_class import ReturnClass
+from util.pico_interface import PicoInterface
+from util.pico_io import PicoIO
+from util.return_class import ReturnClass
 
 
 def power_of_2(number):

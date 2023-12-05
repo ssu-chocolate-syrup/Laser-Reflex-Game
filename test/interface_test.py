@@ -5,8 +5,8 @@ Test Title: Turn on all picopad LED
 import time
 
 from config import RGB
-from pico_interface import PicoInterface
-from pico_io import PicoIO
+from util.pico_interface import PicoInterface
+from util.pico_io import PicoIO
 
 
 class PicoInterfaceTest:

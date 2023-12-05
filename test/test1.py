@@ -6,9 +6,8 @@ import struct
 import socket
 from _thread import *
 
-from pico_interface import PicoInterface
-from config import Server, Wifi
-from return_class import ReturnClass
+from util.pico_interface import PicoInterface
+from util.return_class import ReturnClass
 
 HOST = input('서버에 출력되는 IP주소를 입력하세요')
 PORT = 9999

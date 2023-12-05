@@ -1,14 +1,13 @@
 import socket
 import json
-import time
 import threading
 import struct
 from _thread import *
 
-from game import LaserGame
+from main.game import LaserGame
 from config import Server
-from pico_interface import PicoInterface
-from return_class import ReturnClass
+from util.pico_interface import PicoInterface
+from util.return_class import ReturnClass
 
 
 class LaserGameServer:
