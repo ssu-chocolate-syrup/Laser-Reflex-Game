@@ -1,5 +1,6 @@
 import time
 import RPi.GPIO as GPIO
+import random
 
 GPIO.setmode(GPIO.BCM)
 
@@ -24,13 +25,22 @@ def p2_segment(c):
 
 GPIO.setwarnings(False)
 
-GPIO.setup(list(p1_pins.values()),GPIO.OUT)
-GPIO.output(list(p1_pins.values()),GPIO.LOW)
+def num_out():
+    try:
+        GPIO.setup(list(p1_pins.values()),GPIO.OUT)
+        GPIO.output(list(p1_pins.values()),GPIO.LOW)
 
-GPIO.setup(list(p2_pins.values()), GPIO.OUT)
-GPIO.output(list(p2_pins.values()), GPIO.LOW)
+        GPIO.setup(list(p2_pins.values()), GPIO.OUT)
+        GPIO.output(list(p2_pins.values()), GPIO.LOW)
+        
+        p1_goalpost = random.choice([1,2,3,5,6,7])
+        p2_goalpost = random.choice([1,2,3,5,6,7])
 
-p1_segment(1)
-time.sleep(10)
+        p1_segment(p1_goalpost)
+        p2_segment(p2_goalpost)
 
-GPIO.cleanup()
+    except KeyboardInterrupt:
+        break
+    finally:
+        GPIO.cleanup()
+num_out()
