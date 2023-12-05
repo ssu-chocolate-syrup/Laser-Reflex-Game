@@ -26,6 +26,7 @@ try:
         renderChar(val)
         val = 0 if val == 9 else (val + 1)
         time.sleep(1)
+        
 except KeyboardInterrupt:
     print("Goodbye")
 finally:
