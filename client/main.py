@@ -6,9 +6,9 @@ from _thread import *
 import network
 import picokeypad
 
-from config import Server
-from config import Wifi
-from config import RGB
+from util.config import Server
+from util.config import Wifi
+from util.config import RGB
 from util.pico_interface import PicoInterface
 from util.pico_io import PicoIO
 from util.return_class import ReturnClass

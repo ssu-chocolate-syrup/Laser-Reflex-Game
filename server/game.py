@@ -1,8 +1,8 @@
 import random
 from typing import List, Tuple
 
+from util.config import RGB
 from util.pico_interface import PicoInterface
-from config import RGB
 from util.return_class import ReturnClass
 
 

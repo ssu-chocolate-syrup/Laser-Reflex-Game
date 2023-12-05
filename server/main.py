@@ -5,7 +5,7 @@ import struct
 from _thread import *
 
 from game import LaserGame
-from config import Server
+from util.config import Server
 from util.pico_interface import PicoInterface
 from util.return_class import ReturnClass
 
