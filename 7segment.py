@@ -21,9 +21,14 @@ def p2_segment(c):
     for k,v in masks.items():
         if val&v==v:
             GPIO.output(p2_pins[k], GPIO.HIGH)
+
 GPIO.setwarnings(False)
+
 GPIO.setup(list(p1_pins.values()),GPIO.OUT)
 GPIO.output(list(p1_pins.values()),GPIO.LOW)
+
+GPIO.setup(list(p2_pins.values()), GPIO.OUT)
+GPIO.output(list(p2_pins.values()), GPIO.LOW)
 
 p1_segment(1)
 time.sleep(10)
