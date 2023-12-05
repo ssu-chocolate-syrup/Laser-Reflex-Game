@@ -159,9 +159,8 @@ class LaserGame:
             self.send_data.append(self.return_class_utils.get_convert_dict(send_data_item))
 
     def main(self):
-        for i in range(7):
-            self.process_goalposts('p1', 0)
-            self.process_goalposts('p2', self.MAX_ROW - 1)
+        self.process_goalposts('p1', 0)
+        self.process_goalposts('p2', self.MAX_ROW - 1)
 
         for row in range(self.MAX_ROW):
             for col in range(self.MAX_COL):
