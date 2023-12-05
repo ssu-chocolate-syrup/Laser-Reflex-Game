@@ -1,3 +1,4 @@
+'''
 import pygame
 
 class Sound:
@@ -18,3 +19,4 @@ class Sound:
         pygame.mixer.stop()
         sound_effect = pygame.mixer.Sound('gameover.mp3')
         sound_effect.play()
+'''
