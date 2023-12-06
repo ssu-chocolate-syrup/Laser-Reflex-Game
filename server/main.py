@@ -19,11 +19,11 @@ class LaserGameServer:
         self.client_sockets = []
         self.server_socket = None
         self.turn_end_button_cnt = 0
-        self.current_timer_thread = None
-        self.timer_stop_flag = False  # 타이머 중지 플래그 추가
-        self.timer_completed = threading.Event()  # 타이머 완료 이벤트
-        self.timer_reset_flag = threading.Event()  # 타이머 리셋 플래그 추가
-        self.start = True
+        # self.current_timer_thread = None
+        # self.timer_stop_flag = False  # 타이머 중지 플래그 추가
+        # self.timer_completed = threading.Event()  # 타이머 완료 이벤트
+        # self.timer_reset_flag = threading.Event()  # 타이머 리셋 플래그 추가
+        # self.start = True
 
     @staticmethod
     def recv_all(client_socket, byte_size):
@@ -136,11 +136,13 @@ class LaserGameServer:
                     continue
                 print('>> Received from', addr[0], ':', addr[1], button_input_data)
                 ##sujeong
-                _, received_device_id, received_button_id = self.return_class_utils.get_convert_return_class(button_input_data)
+                _, received_device_id, received_button_id = self.return_class_utils.get_convert_return_class(
+                    button_input_data)
                 row, col = self.pico_interface.input_interface(received_device_id, received_button_id)
                 if (row == 5 and col == 7) or (row == 6 and col == 7):
                     ##타이머 시작 부분, 주석처리 함
                     ##self.start_timer_thread(5)
+                    real_send_data = []
                     self.turn_end_button_cnt = self.turn_end_button_cnt % 2 + 1
                     if self.game_instance.send_data[-1]['result']:
                         self.turn_end_button_cnt = 0
@@ -153,10 +155,8 @@ class LaserGameServer:
                         p2_turn_end_button = ReturnClass(_color_type=f'p{self.turn_end_button_cnt}',
                                                          _device_id=4,
                                                          _button_id=2)
-                        real_send = [
-                            self.return_class_utils.get_convert_dict(p1_turn_end_button),
-                            self.return_class_utils.get_convert_dict(p2_turn_end_button)
-                        ]
+                        real_send_data.append(self.return_class_utils.get_convert_dict(p1_turn_end_button))
+                        real_send_data.append(self.return_class_utils.get_convert_dict(p2_turn_end_button))
                         _, d_id, b_id = self.game_instance.send_data[-2]
                         row, col = self.pico_interface.input_interface(d_id, b_id)
                         if row not in [0, self.game_instance.MAX_ROW - 1]:
@@ -166,9 +166,9 @@ class LaserGameServer:
                                                               _device_id=d_id,
                                                               _button_id=b_id)
                             self.game_instance.send_data[-1] = self.return_class_utils.get_convert_dict(send_data_last_item)
-                        for send_data in self.game_instance.send_data:
-                            real_send.append(send_data)
-                    self.send_to_pico(client_socket, json.dumps(self.game_instance.send_data).encode())
+                        for send_data_item in self.game_instance.send_data:
+                            real_send_data.append(send_data_item)
+                    self.send_to_pico(client_socket, json.dumps(real_send_data).encode())
                     self.game_instance.send_data = []
 
                     ## 5,7입력들어오면 현재 실행중인 타이머 종료, 타이머 재시작
