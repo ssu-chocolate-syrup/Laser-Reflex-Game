@@ -54,10 +54,11 @@ class LaserGameServer:
     def win_effect(self, player):
         win_effect_send_data = []
         for device_id in range(1, 6 + 1):
-            win_effect_item = ReturnClass(_color_type='p1' if player == 1 else 'p2',
-                                          _device_id=device_id,
-                                          _button_id=15)
-            win_effect_send_data.append(win_effect_item)
+            for button_id in range(16):
+                win_effect_item = ReturnClass(_color_type='p1' if player == 1 else 'p2',
+                                              _device_id=device_id,
+                                              _button_id=button_id)
+                win_effect_send_data.append(win_effect_item)
         return win_effect_send_data
 
     def dfs_to_clients(self, client_socket):
@@ -97,10 +98,12 @@ class LaserGameServer:
                         for send_data_item in self.game_instance.send_data:
                             real_send_data.append(send_data_item)
 
-                        send_data_last_item = ReturnClass(_color_type='tf',
-                                                          _device_id=d_id,
-                                                          _button_id=b_id)
-                        real_send_data.append(send_data_last_item)
+                        row, col = self.pico_interface.input_interface(d_id, b_id)
+                        if row in [0, self.game_instance.MAX_ROW - 1]:
+                            send_data_last_item = ReturnClass(_color_type='tf',
+                                                              _device_id=d_id,
+                                                              _button_id=b_id)
+                            real_send_data.append(send_data_last_item)
                     self.send_to_pico(client_socket, real_send_data)
                     self.game_instance.send_data = []
                 else:
