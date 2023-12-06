@@ -55,42 +55,13 @@ class LaserGameServer:
 
     def win_effect(self, player):
         win_effect_send_data = []
-        for col in [2, 3, 4, 7, 8, 9]:
-            _device_id, _button_id = self.pico_interface.input_interface(1, col)
-            win_effect_item = ReturnClass(_color_type='p1' if player == 1 else 'p2',
-                                          _device_id=_device_id,
-                                          _button_id=_button_id)
-            win_effect_send_data.append(win_effect_item)
-        for col in range(12):
-            __device_id, _button_id = self.pico_interface.input_interface(2, col)
-            win_effect_item = ReturnClass(_color_type='p1' if player == 1 else 'p2',
-                                          _device_id=_device_id,
-                                          _button_id=_button_id)
-            win_effect_send_data.append(win_effect_item)
-        for col in range(12):
-            __device_id, _button_id = self.pico_interface.input_interface(3, col)
-            win_effect_item = ReturnClass(_color_type='p1' if player == 1 else 'p2',
-                                          _device_id=_device_id,
-                                          _button_id=_button_id)
-            win_effect_send_data.append(win_effect_item)
-        for col in range(1, 11):
-            __device_id, _button_id = self.pico_interface.input_interface(4, col)
-            win_effect_item = ReturnClass(_color_type='p1' if player == 1 else 'p2',
-                                          _device_id=_device_id,
-                                          _button_id=_button_id)
-            win_effect_send_data.append(win_effect_item)
-        for col in range(3, 9):
-            __device_id, _button_id = self.pico_interface.input_interface(5, col)
-            win_effect_item = ReturnClass(_color_type='p1' if player == 1 else 'p2',
-                                          _device_id=_device_id,
-                                          _button_id=_button_id)
-            win_effect_send_data.append(win_effect_item)
-        for col in range(5, 7):
-            __device_id, _button_id = self.pico_interface.input_interface(3, col)
-            win_effect_item = ReturnClass(_color_type='p1' if player == 1 else 'p2',
-                                          _device_id=_device_id,
-                                          _button_id=_button_id)
-            win_effect_send_data.append(win_effect_item)
+        for row in range(self.game_instance.MAX_ROW):
+            for col in range(self.game_instance.MAX_COL):
+                if (row + col) % 2 == 0:
+                    device_id, button_id = self.pico_interface.output_interface(row, col)
+                    win_effect_send_data.append(ReturnClass(_color_type=f'p{player}',
+                                                            _device_id=device_id,
+                                                            _button_id=button_id))
         return win_effect_send_data
 
     def dfs_to_clients(self, client_socket):
