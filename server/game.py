@@ -75,15 +75,15 @@ class LaserGame:
             send_data_item = ReturnClass(_color_type='l', _device_id=device_id, _button_id=button_id)
             self.send_data.append(send_data_item)
 
-            if direction == self.Direction.LEFT:
-                return self.dfs(row, col - 1, direction)
-            elif direction == self.Direction.RIGHT:
-                return self.dfs(row, col + 1, direction)
-            elif direction == self.Direction.DOWN:
-                return self.dfs(row + 1, col, direction)
-            elif direction == self.Direction.UP:
-                return self.dfs(row - 1, col, direction)
-            return 0, 0
+        if direction == self.Direction.LEFT:
+            return self.dfs(row, col - 1, direction)
+        elif direction == self.Direction.RIGHT:
+            return self.dfs(row, col + 1, direction)
+        elif direction == self.Direction.DOWN:
+            return self.dfs(row + 1, col, direction)
+        elif direction == self.Direction.UP:
+            return self.dfs(row - 1, col, direction)
+        return 0, 0
 
     def init(self):
         self.mirror = [[0] * self.MAX_COL for _ in range(self.MAX_ROW)]
