@@ -112,7 +112,7 @@ class LaserGame:
             self.mirror[row][col] = 0
 
     def goal_check(self, _device_id, _button_id):
-        row_col = self.pico_interface.output_interface(_device_id, _button_id)
+        row_col = self.pico_interface.input_interface(_device_id, _button_id)
         return self.goal_in(row_col)
 
     def process_goalposts(self, player, row_offset):
