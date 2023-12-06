@@ -64,33 +64,8 @@ class LaserGame:
 
     def dfs(self, row: int, col: int, direction: int) -> Tuple[int, int]:
         if row < 0 or row >= self.MAX_ROW:
-            if row < 0:
-                goalin_result = self.goal_in((row + 1, col))
-                self.send_data.append(goalin_result)
-            if row >= self.MAX_ROW:
-                goalin_result = self.goal_in((row - 1, col))
-                self.send_data.append({
-                    'player': goalin_result['player'],
-                    'result': goalin_result['result'],
-                    'row': row - 1,
-                    'col': col
-                })
             return -1, -1
         if col < 0 or col >= self.MAX_COL:
-            if col < 0:
-                self.send_data.append({
-                    'player': -1,
-                    'result': False,
-                    'row': row,
-                    'col': col + 1
-                })
-            if col >= self.MAX_COL:
-                self.send_data.append({
-                    'player': -1,
-                    'result': False,
-                    'row': row,
-                    'col': col - 1
-                })
             return -1, -1
         self.laser[row][col] = 1
         if self.mirror[row][col]:
@@ -98,7 +73,7 @@ class LaserGame:
         else:
             device_id, button_id = self.pico_interface.output_interface(row, col)
             send_data_item = ReturnClass(_color_type='l', _device_id=device_id, _button_id=button_id)
-            self.send_data.append(self.return_class_utils.get_convert_dict(send_data_item))
+            self.send_data.append(send_data_item)
 
             if direction == self.Direction.LEFT:
                 return self.dfs(row, col - 1, direction)
@@ -136,8 +111,7 @@ class LaserGame:
         if self.mirror[row][col] > 2:
             self.mirror[row][col] = 0
 
-    def goal_check(self):
-        _device_id, _button_id = self.send_data[-1]
+    def goal_check(self, _device_id, _button_id):
         row_col = self.pico_interface.output_interface(_device_id, _button_id)
         return self.goal_in(row_col)
 
@@ -146,7 +120,7 @@ class LaserGame:
             if goalpost:
                 device_id, button_id = self.pico_interface.output_interface(row_offset, i)
                 send_data_item = ReturnClass(_color_type=player, _device_id=device_id, _button_id=button_id)
-                self.send_data.append(self.return_class_utils.get_convert_dict(send_data_item))
+                self.send_data.append(send_data_item)
 
     def process_mirror(self, row, col, mirror_type):
         if self.mirror[row][col]:
@@ -156,7 +130,7 @@ class LaserGame:
                 _device_id=device_id,
                 _button_id=button_id
             )
-            self.send_data.append(self.return_class_utils.get_convert_dict(send_data_item))
+            self.send_data.append(send_data_item)
 
     def main(self):
         self.process_goalposts('p1', 0)

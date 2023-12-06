@@ -60,8 +60,11 @@ class LaserGameServer:
         return win_effect_send_data
 
     def dfs_to_clients(self, client_socket):
-        self.game_instance.main()
-        self.send_to_pico(client_socket, json.dumps(self.game_instance.send_data).encode())
+        send_data = [
+            self.return_class_utils.get_convert_dict(item)
+            for item in self.game_instance.main()
+        ]
+        self.send_to_pico(client_socket, json.dumps(send_data).encode())
         self.game_instance.send_data = []
 
     def threaded(self, client_socket, addr):
@@ -75,36 +78,31 @@ class LaserGameServer:
                 received_data = self.return_class_utils.get_convert_return_class(button_input_data)
                 row, col = self.pico_interface.input_interface(received_data.device_id, received_data.button_id)
                 if (row == 5 and col == 7) or (row == 6 and col == 7):
-                    if not self.turn_end_button_cnt:
-                        self.game_instance.init()
-
-                    real_send_data = []
+                    real_send_data = self.game_instance.main()
                     self.turn_end_button_cnt = self.turn_end_button_cnt % 2 + 1
-                    if self.game_instance.send_data[-1]['result']:
+                    _, d_id, b_id = real_send_data[-1]
+                    if self.game_instance.goal_check(d_id, b_id)['result']:
                         self.turn_end_button_cnt = 0
                         self.game_instance.send_data = self.win_effect(self.game_instance.send_data[-1]['player'])
                         self.game_instance.init()
                     else:
+                        real_send_data = []
                         p1_turn_end_button = ReturnClass(_color_type=f'p{self.turn_end_button_cnt}',
                                                          _device_id=4,
                                                          _button_id=1)
                         p2_turn_end_button = ReturnClass(_color_type=f'p{self.turn_end_button_cnt}',
                                                          _device_id=4,
                                                          _button_id=2)
-                        real_send_data.append(self.return_class_utils.get_convert_dict(p1_turn_end_button))
-                        real_send_data.append(self.return_class_utils.get_convert_dict(p2_turn_end_button))
-                        _, d_id, b_id = self.game_instance.send_data[-2]
-                        row, col = self.pico_interface.input_interface(d_id, b_id)
-                        if row not in [0, self.game_instance.MAX_ROW - 1]:
-                            self.game_instance.send_data.pop()
-                        else:
-                            send_data_last_item = ReturnClass(_color_type='tf',
-                                                              _device_id=d_id,
-                                                              _button_id=b_id)
-                            self.game_instance.send_data[-1] = self.return_class_utils.get_convert_dict(
-                                send_data_last_item)
+                        real_send_data.append(p1_turn_end_button)
+                        real_send_data.append(p2_turn_end_button)
+
                         for send_data_item in self.game_instance.send_data:
                             real_send_data.append(send_data_item)
+
+                        send_data_last_item = ReturnClass(_color_type='tf',
+                                                          _device_id=d_id,
+                                                          _button_id=b_id)
+                        real_send_data.append(send_data_last_item)
                     self.send_to_pico(client_socket, json.dumps(real_send_data).encode())
                     self.game_instance.send_data = []
                 else:

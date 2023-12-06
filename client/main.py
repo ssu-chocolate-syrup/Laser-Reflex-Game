@@ -87,6 +87,7 @@ class Client:
     def processing(self, client_socket):
         while True:
             data = self.recv_data(client_socket)
+            print(data)
             # 불 끄기
             for button in range(16):
                 if self.device_id % 2 == 0 and 0 <= button < 4:
@@ -104,7 +105,7 @@ class Client:
     def start(self):
         if not self._socket_conn():
             return
-        
+
         start_new_thread(self.processing, (self.client_socket,))
         last_button_states = 0
         print("Client Start")
