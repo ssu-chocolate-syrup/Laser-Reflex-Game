@@ -41,7 +41,6 @@ class LaserGameServer:
     def send_data_to_client(self, client, data):
         data_to_dict = [self.return_class_utils.get_convert_dict(item) for item in data]
         data_to_dict_json = json.dumps(data_to_dict).encode()
-        print(data_to_dict_json)
         client.sendall(struct.pack('!I', len(data_to_dict_json)))
         client.sendall(data_to_dict_json)
 
@@ -67,6 +66,9 @@ class LaserGameServer:
         self.game_instance.send_data = []
 
     def threaded(self, client_socket, addr):
+        print(f'player1 goalpost: {self.game_instance.get_goalpost_x(self.game_instance.p1_goalpost)}')
+        print(f'player2 goalpost: {self.game_instance.get_goalpost_x(self.game_instance.p2_goalpost)}')
+
         print('>> Connected by:', addr[0], ':', addr[1])
         while True:
             try:
@@ -80,9 +82,10 @@ class LaserGameServer:
                     real_send_data = self.game_instance.main()
                     self.turn_end_button_cnt = self.turn_end_button_cnt % 2 + 1
                     _, d_id, b_id = real_send_data[-1]
-                    if self.game_instance.goal_check(d_id, b_id)['result']:
+                    is_goal_in = self.game_instance.goal_check(d_id, b_id)
+                    if is_goal_in['result']:
                         self.turn_end_button_cnt = 0
-                        real_send_data = self.win_effect(self.game_instance.send_data[-1]['player'])
+                        real_send_data = self.win_effect(is_goal_in['player'])
                         self.game_instance.init()
                     else:
                         real_send_data = []
