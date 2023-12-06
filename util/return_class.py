@@ -23,9 +23,7 @@ class ReturnClassUtils:
         _color_type = data.get('c', None)
         _device_id = data.get('d', None)
         _button_id = data.get('b', None)
-        if _color_type and _device_id and _button_id:
-            return self.set_return_class(_color_type, _device_id, _button_id)
-        return data
+        return self.set_return_class(_color_type, _device_id, _button_id)
 
     @staticmethod
     def get_convert_dict(data):

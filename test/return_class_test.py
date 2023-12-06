@@ -17,12 +17,16 @@ class ReturnClassTest:
         _color_type, _device_id, _button_id = method_1_class
         dict2class = self.return_class_utils.get_convert_return_class(method_1_class_dict)
 
+        none_return_class = ReturnClass(_color_type=None, _device_id=None, _button_id=None)
+        _n_color_type, _n_device_id, _n_button_id = none_return_class
+
         print("Make Class #1: ", method_1_class)
         print("Make Class #2: ", method_2_class)
         print("Make Class and Convert Dict: ", method_1_class_dict)
         print("Make Class and Convert Json: ", method_1_class_json)
         print("Return Class Unpacking Test: ", _color_type, _device_id, _button_id)
         print("Make Class with dict: ", dict2class)
+        print("Return Class with None Value Unpacking Test: ", _n_color_type, _n_device_id, _n_button_id)
 
 
 if __name__ == '__main__':
