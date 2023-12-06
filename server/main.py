@@ -38,13 +38,14 @@ class LaserGameServer:
             data = self.recv_all(client_socket, message_len).decode()
             return json.loads(data)
 
-    @staticmethod
-    def send_data_to_client(client, data):
-        client.sendall(struct.pack('!I', len(data)))
-        client.sendall(data)
+    def send_data_to_client(self, client, data):
+        data_to_dict = [self.return_class_utils.get_convert_dict(item) for item in data]
+        data_to_dict_json = json.dumps(data_to_dict).encode()
+        print(data_to_dict_json)
+        client.sendall(struct.pack('!I', len(data_to_dict_json)))
+        client.sendall(data_to_dict_json)
 
     def send_to_pico(self, client_socket, send_data):
-        print(send_data)
         self.send_data_to_client(client_socket, send_data)
         for client in self.client_sockets:
             if client != client_socket:
@@ -56,15 +57,12 @@ class LaserGameServer:
             win_effect_item = ReturnClass(_color_type='p1' if player == 1 else 'p2',
                                           _device_id=device_id,
                                           _button_id=15)
-            win_effect_send_data.append(self.return_class_utils.get_convert_dict(win_effect_item))
+            win_effect_send_data.append(win_effect_item)
         return win_effect_send_data
 
     def dfs_to_clients(self, client_socket):
-        send_data = [
-            self.return_class_utils.get_convert_dict(item)
-            for item in self.game_instance.main()
-        ]
-        self.send_to_pico(client_socket, json.dumps(send_data).encode())
+        send_data = self.game_instance.main()
+        self.send_to_pico(client_socket, send_data)
         self.game_instance.send_data = []
 
     def threaded(self, client_socket, addr):
@@ -83,7 +81,7 @@ class LaserGameServer:
                     _, d_id, b_id = real_send_data[-1]
                     if self.game_instance.goal_check(d_id, b_id)['result']:
                         self.turn_end_button_cnt = 0
-                        self.game_instance.send_data = self.win_effect(self.game_instance.send_data[-1]['player'])
+                        real_send_data = self.win_effect(self.game_instance.send_data[-1]['player'])
                         self.game_instance.init()
                     else:
                         real_send_data = []
@@ -103,7 +101,7 @@ class LaserGameServer:
                                                           _device_id=d_id,
                                                           _button_id=b_id)
                         real_send_data.append(send_data_last_item)
-                    self.send_to_pico(client_socket, json.dumps(real_send_data).encode())
+                    self.send_to_pico(client_socket, real_send_data)
                     self.game_instance.send_data = []
                 else:
                     if col != 7:
