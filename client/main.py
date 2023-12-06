@@ -94,7 +94,6 @@ class Client:
     def processing(self, client_socket):
         while True:
             data = self.recv_data(client_socket)
-
             # 불 끄기
             for button in range(16):
                 if self.device_id % 2 == 0 and 0 <= button < 4:
@@ -105,7 +104,6 @@ class Client:
             # 불 켜기
             if not data:
                 break
-
             for item in data:
                 _color_type, _device_id, _button_id = item
                 row, col = self.pico_interface.input_interface(_device_id, _button_id)
