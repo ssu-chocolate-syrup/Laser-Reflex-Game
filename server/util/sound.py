@@ -2,21 +2,21 @@
 import pygame
 
 class Sound:
-    def clear(self):
+    def __init__(self):
         pygame.mixer.init()
+        self.bgm_sound = pygame.mixer.Sound('bgm.mp3')
+        self.turn_sound = pygame.mixer.Sound('turn.mp3')
+        self.game_over_sound = pygame.mixer.Sound('gameover.mp3')
 
-    def bgm(self):
+    def play_bgm(self):
         pygame.mixer.stop()
-        sound_effect = pygame.mixer.Sound('bgm.mp3')
-        sound_effect.play()
+        self.bgm_sound.play()
 
-    def turn_change(self):
+    def play_turn_change(self):
         pygame.mixer.stop()
-        sound_effect = pygame.mixer.Sound('turn.mp3')
-        sound_effect.play()
+        self.turn_sound.play()
 
-    def game_over(self):
+    def play_game_over(self):
         pygame.mixer.stop()
-        sound_effect = pygame.mixer.Sound('gameover.mp3')
-        sound_effect.play()
+        self.game_over_sound.play()
 '''
