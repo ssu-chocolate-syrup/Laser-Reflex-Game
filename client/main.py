@@ -67,7 +67,8 @@ class Client:
                 ErrorException('Socket Connection Failed', self.device_id, 1).error()
                 return False
 
-    def recv_all(self, client_socket, byte_size):
+    @staticmethod
+    def recv_all(client_socket, byte_size):
         data = b''
         while len(data) < byte_size:
             packet = client_socket.recv(byte_size - len(data))
@@ -79,15 +80,21 @@ class Client:
     def recv_data(self, client_socket):
         while True:
             raw_message_len = self.recv_all(client_socket, 4)
+            if not raw_message_len:
+                return None
             message_len = struct.unpack('!I', raw_message_len)[0]
             data = self.recv_all(client_socket, message_len).decode()
-            data = [self.return_class_utils.get_convert_return_class(item) for item in json.loads(data)]
-            return data
+            try:
+                data_json = json.loads(data)
+                data = [self.return_class_utils.get_convert_return_class(item) for item in data_json]
+                return data
+            except:
+                return None
 
     def processing(self, client_socket):
         while True:
             data = self.recv_data(client_socket)
-            print(data)
+
             # 불 끄기
             for button in range(16):
                 if self.device_id % 2 == 0 and 0 <= button < 4:
@@ -96,6 +103,9 @@ class Client:
                 self.pico_io.run(self.device_id, row, col, self.rgb.NONE)
 
             # 불 켜기
+            if not data:
+                break
+
             for item in data:
                 _color_type, _device_id, _button_id = item
                 row, col = self.pico_interface.input_interface(_device_id, _button_id)

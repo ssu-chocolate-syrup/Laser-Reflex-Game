@@ -36,7 +36,10 @@ class LaserGameServer:
                 return None
             message_len = struct.unpack('!I', raw_message_len)[0]
             data = self.recv_all(client_socket, message_len).decode()
-            return json.loads(data)
+            try:
+                return json.loads(data)
+            except:
+                return None
 
     def send_data_to_client(self, client, data):
         data_to_dict = [self.return_class_utils.get_convert_dict(item) for item in data]
@@ -65,10 +68,27 @@ class LaserGameServer:
         self.send_to_pico(client_socket, send_data)
         self.game_instance.send_data = []
 
-    def threaded(self, client_socket, addr):
-        print(f'player1 goalpost: {self.game_instance.get_goalpost_x(self.game_instance.p1_goalpost)}')
-        print(f'player2 goalpost: {self.game_instance.get_goalpost_x(self.game_instance.p2_goalpost)}')
+    def _click_turn_end_button(self):
+        real_send_data = self.game_instance.main()
+        self.turn_end_button_cnt = self.turn_end_button_cnt % 2 + 1
+        _, d_id, b_id = real_send_data[-1]
+        is_goal_in = self.game_instance.goal_check(d_id, b_id)
+        if is_goal_in['result']:
+            self.turn_end_button_cnt = 0
+            real_send_data = self.win_effect(is_goal_in['player'])
+            self.game_instance.init()
+        else:
+            real_send_data = [
+                ReturnClass(_color_type=f'p{self.turn_end_button_cnt}', _device_id=4, _button_id=1),
+                ReturnClass(_color_type=f'p{self.turn_end_button_cnt}', _device_id=4, _button_id=2),
+                *self.game_instance.send_data
+            ]
+            row, col = self.pico_interface.input_interface(d_id, b_id)
+            if row in [0, self.game_instance.MAX_ROW - 1]:
+                real_send_data.append(ReturnClass(_color_type='tf', _device_id=d_id, _button_id=b_id))
+        return real_send_data
 
+    def threaded(self, client_socket, addr):
         print('>> Connected by:', addr[0], ':', addr[1])
         while True:
             try:
@@ -78,42 +98,13 @@ class LaserGameServer:
                 print('>> Received from', addr[0], ':', addr[1], button_input_data)
                 received_data = self.return_class_utils.get_convert_return_class(button_input_data)
                 row, col = self.pico_interface.input_interface(received_data.device_id, received_data.button_id)
-                if (row == 5 and col == 7) or (row == 6 and col == 7):
-                    real_send_data = self.game_instance.main()
-                    self.turn_end_button_cnt = self.turn_end_button_cnt % 2 + 1
-                    _, d_id, b_id = real_send_data[-1]
-                    is_goal_in = self.game_instance.goal_check(d_id, b_id)
-                    if is_goal_in['result']:
-                        self.turn_end_button_cnt = 0
-                        real_send_data = self.win_effect(is_goal_in['player'])
-                        self.game_instance.init()
-                    else:
-                        real_send_data = []
-                        p1_turn_end_button = ReturnClass(_color_type=f'p{self.turn_end_button_cnt}',
-                                                         _device_id=4,
-                                                         _button_id=1)
-                        p2_turn_end_button = ReturnClass(_color_type=f'p{self.turn_end_button_cnt}',
-                                                         _device_id=4,
-                                                         _button_id=2)
-                        real_send_data.append(p1_turn_end_button)
-                        real_send_data.append(p2_turn_end_button)
-
-                        for send_data_item in self.game_instance.send_data:
-                            real_send_data.append(send_data_item)
-
-                        row, col = self.pico_interface.input_interface(d_id, b_id)
-                        if row in [0, self.game_instance.MAX_ROW - 1]:
-                            send_data_last_item = ReturnClass(_color_type='tf',
-                                                              _device_id=d_id,
-                                                              _button_id=b_id)
-                            real_send_data.append(send_data_last_item)
+                if row in (5, 6) and col == 7:
+                    real_send_data = self._click_turn_end_button()
                     self.send_to_pico(client_socket, real_send_data)
                     self.game_instance.send_data = []
-                else:
-                    if col != 7:
-                        self.game_instance.input_mirror(row, col)
-                        self.dfs_to_clients(client_socket)
-
+                elif col != 7:
+                    self.game_instance.input_mirror(row, col)
+                    self.dfs_to_clients(client_socket)
             except ConnectionResetError as e:
                 print('>> Disconnected by', addr[0], ':', addr[1])
                 break
@@ -121,7 +112,6 @@ class LaserGameServer:
         if client_socket in self.client_sockets:
             self.client_sockets.remove(client_socket)
             print('remove client list:', len(self.client_sockets))
-
         client_socket.close()
 
     def start_server(self):
