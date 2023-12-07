@@ -96,8 +96,8 @@ class Client:
             data = self.recv_data(client_socket)
             # 불 끄기
             for button in range(16):
-                if self.device_id % 2 == 0 and 0 <= button < 4:
-                    continue
+                '''if self.device_id % 2 == 0 and 0 <= button < 4:
+                    continue'''
                 row, col = self.pico_interface.input_interface(self.device_id, button)
                 self.pico_io.run(self.device_id, row, col, self.rgb.NONE)
 
@@ -108,7 +108,7 @@ class Client:
                 _color_type, _device_id, _button_id = item
                 row, col = self.pico_interface.input_interface(_device_id, _button_id)
                 self.pico_io.run(self.device_id, row, col, self.color_mapping.get(_color_type, None))
-                time.sleep(0.1)
+                time.sleep(0.05)
 
     def start(self):
         if not self._socket_conn():
@@ -120,7 +120,7 @@ class Client:
         for button_id in range(16):
             row, col = self.pico_interface.input_interface(self.device_id, button_id)
             self.pico_io.run(self.device_id, row, col, self.rgb.LASER)
-            time.sleep(0.1)
+            time.sleep(0.5)
         for button_id in range(16):
             row, col = self.pico_interface.input_interface(self.device_id, button_id)
             self.pico_io.run(self.device_id, row, col, self.rgb.NONE)
