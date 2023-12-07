@@ -10,6 +10,7 @@ from util.pico_interface import PicoInterface
 from util.return_class import ReturnClass
 from util.return_class import ReturnClassUtils
 from util.sound import Sound
+from util.segment import SevenSegmentDisplay
 
 class LaserGameServer:
     def __init__(self):
@@ -21,9 +22,8 @@ class LaserGameServer:
         self.turn_end_button_cnt = 0
         self.sound=Sound()
         self.sound.play_bgm()
-
-
-
+        self.segment = SevenSegmentDisplay()
+        self.segment.display_numbers(self.game_instance.get_goalpost_x(self.game_instance.p1_goalpost)+1,self.game_instance.get_goalpost_x(self.game_instance.p2_goalpost)+1)
     @staticmethod
     def recv_all(client_socket, byte_size):
         data = b''
