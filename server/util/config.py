@@ -1,11 +1,11 @@
 class Server:
-    HOST = '192.168.101.199'
+    HOST = '192.168.245.199'
     PORT = 9999
 
 
 class Wifi:
-    SSID = 'pqpq'
-    PW = '@@@@@@@@'
+    SSID = 'nt'
+    PW = '00111111'
 
 
 class RGB:
