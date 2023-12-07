@@ -59,7 +59,7 @@ class LaserGameServer:
                 self.send_data_to_client(client, send_data)
 
     def win_effect(self, player):
-        self.sound.play_over_sound()
+        self.sound.play_game_over()
         win_effect_send_data = []
         for row in range(self.game_instance.MAX_ROW):
             for col in range(self.game_instance.MAX_COL):
@@ -106,7 +106,7 @@ class LaserGameServer:
                 received_data = self.return_class_utils.get_convert_return_class(button_input_data)
                 row, col = self.pico_interface.input_interface(received_data.device_id, received_data.button_id)
                 if row in (5, 6) and col == 7:
-                    self.sound.play_turn_change_bgm()
+                    self.sound.play_turn_change()
                     real_send_data = self._click_turn_end_button()
                     self.send_to_pico(client_socket, real_send_data)
                     self.game_instance.send_data = []
